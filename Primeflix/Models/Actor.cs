@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Primeflix.Models
 {
@@ -7,9 +8,13 @@ namespace Primeflix.Models
     public class Actor
     {
         [Key]
+        [Column("actor_id")]
         public int Id { get; set; }
+ 
+        [Column("product_id")]
         public int ProductId { get; set; }
         public Product Product { get; set; }
+        [Column("celebrity_id")]
         public int CelebrityId { get; set; }
         public Celebrity Celebrity { get; set; }
 

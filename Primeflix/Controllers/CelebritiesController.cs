@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Primeflix.Data;
 using Primeflix.Models;
 
@@ -16,10 +17,9 @@ namespace Primeflix.Controllers
         }
 
         [HttpGet]
-        public List<Celebrity> GetCelebrities()
+        public async Task<ActionResult<IEnumerable<Celebrity>>> GetCelebrity()
         {
-            var data = _context.Celebrity.ToList();
-            return data;
+            return await _context.Celebrity.ToListAsync();
         }
     }
 }

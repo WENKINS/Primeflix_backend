@@ -27,7 +27,7 @@ namespace Primeflix.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProduct()
         {
-            return await _context.Product.ToListAsync();
+            return await _context.Product.Include(p => p.ActorsMovies).ToListAsync();
         }
 
         // GET: api/Products/5
