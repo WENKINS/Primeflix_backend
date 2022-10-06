@@ -10,6 +10,8 @@ using Primeflix.Models;
 
 namespace Primeflix.Controllers
 {
+    // Class that handles the requests and returns responses
+
     [Route("api/[controller]")]
     [ApiController]
     public class ProductsController : ControllerBase
