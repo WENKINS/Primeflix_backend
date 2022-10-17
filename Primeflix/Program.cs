@@ -10,6 +10,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddMvc();
 builder.Services.AddControllers().AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 builder.Services.AddEntityFrameworkMySQL().AddDbContext<DatabaseContext>(options =>
 {
@@ -32,3 +33,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+app.UseMvc();
