@@ -19,7 +19,7 @@ namespace Primeflix.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Celebrity>>> GetCelebrity()
         {
-            return await _context.Celebrity.ToListAsync();
+            return await _context.Celebrities.ToListAsync();
         }
     }
 }

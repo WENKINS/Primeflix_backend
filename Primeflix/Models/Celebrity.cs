@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Primeflix.Models
 {
+    [Table("celebrity")]
     public class Celebrity
     {
         [Key]

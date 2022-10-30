@@ -38,11 +38,11 @@ namespace Primeflix.Data
             base.OnModelCreating(modelBuilder);
         }
 
-        public virtual DbSet<Product> Product { get; set; }
-        public virtual DbSet<Actor> Actor { get; set; }
-        public virtual DbSet<Celebrity> Celebrity { get; set;}
-        public virtual DbSet<Genre> Genre { get; set; }
-        public virtual DbSet<ProductGenre> ProductGenre { get; set; }
+        public virtual DbSet<Product> Products { get; set; }
+        public virtual DbSet<Actor> Actors { get; set; }
+        public virtual DbSet<Celebrity> Celebrities { get; set;}
+        public virtual DbSet<Genre> Genres { get; set; }
+        public virtual DbSet<ProductGenre> ProductsGenres { get; set; }
 
     }
 }

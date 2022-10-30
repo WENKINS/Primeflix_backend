@@ -9,6 +9,7 @@ namespace Primeflix.Models
         [Key]
         [Column("genre_id")]
         public int Id { get; set; }
+        [Column("genre_name")]
         public string Name { get; set; }
 
         // Relationships
