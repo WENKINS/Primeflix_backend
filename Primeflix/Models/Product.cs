@@ -17,7 +17,6 @@ namespace Primeflix.Models
         public int Stock { get; set; }
         public int Rating { get; set; }
         public string Format { get; set; }
-        public string Description { get; set; }
         [Column("picture_url")]
         public string PictureUrl { get; set; }
         public double Price { get; set; }
