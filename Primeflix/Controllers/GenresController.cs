@@ -39,7 +39,7 @@ namespace Primeflix.Controllers
             return Ok(genresDto);
         }
 
-        //api/genres/countryId
+        //api/genres/genreId
         [HttpGet("{genreId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
