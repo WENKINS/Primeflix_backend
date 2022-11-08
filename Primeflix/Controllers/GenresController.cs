@@ -8,7 +8,7 @@ namespace Primeflix.Controllers
     [ApiController]
     public class GenresController : Controller
     {
-        
+
         private IGenreRepository _genreRepository;
 
         public GenresController(IGenreRepository genreRepository)
@@ -24,11 +24,11 @@ namespace Primeflix.Controllers
         {
             var genres = _genreRepository.GetGenres().ToList();
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var genresDto = new List<GenreDto>();
-            foreach(var genre in genres)
+            foreach (var genre in genres)
             {
                 genresDto.Add(new GenreDto
                 {
@@ -75,7 +75,7 @@ namespace Primeflix.Controllers
             var genres = _genreRepository.GetGenresOfAProduct(productId);
 
             var genresDto = new List<GenreDto>();
-            foreach(var genre in genres)
+            foreach (var genre in genres)
             {
                 genresDto.Add(new GenreDto()
                 {
@@ -90,5 +90,40 @@ namespace Primeflix.Controllers
             return Ok(genresDto);
         }
 
+        //api/genres/genresId/products
+        [HttpGet("{genreId}/products")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        public IActionResult GetProductsOfAGenre(int genreId)
+        {
+            if (!_genreRepository.GenreExists(genreId))
+                return NotFound();
+
+            var products = _genreRepository.GetProductsOfAGenre(genreId);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var productsDto = new List<ProductDto>();
+
+            foreach (var product in products)
+            {
+                productsDto.Add(new ProductDto
+                {
+                    Id = product.Id,
+                    Title = product.Title,
+                    ReleaseDate = product.ReleaseDate,
+                    Duration = product.Duration,
+                    Stock = product.Stock,
+                    Rating = product.Rating,
+                    Format = product.Format,
+                    PictureUrl = product.PictureUrl,
+                    Price = product.Price
+                });
+            }
+
+            return Ok(productsDto);
+        }
     }
 }

@@ -21,7 +21,8 @@ namespace Primeflix.Models
         public string PictureUrl { get; set; }
         public double Price { get; set; }
         // Relationships
-        public virtual ICollection<Actor> ActorsMovies { get; set; } 
+        public virtual ICollection<Actor> ActorsMovies { get; set; }
+        public virtual ICollection<Director> DirectorsMovies { get; set; }
         public virtual ICollection<ProductGenre> ProductGenre { get; set; }
 
     }   
