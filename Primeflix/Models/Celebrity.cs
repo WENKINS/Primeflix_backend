@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Primeflix.Models
 {
+    [Table("celebrity")]
     public class Celebrity
     {
         [Key]
@@ -13,6 +14,7 @@ namespace Primeflix.Models
         [Column("last_name")]
         public string LastName { get; set; }
         // Relationships
-        public List<Actor> ActorsMovies { get; set; }
+        public virtual ICollection<Actor> ActorsMovies { get; set; }
+        public virtual ICollection<Director> DirectorsMovies { get; set; }
     }
 }
