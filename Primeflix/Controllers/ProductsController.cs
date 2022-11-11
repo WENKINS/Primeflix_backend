@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Primeflix.Data;
+using Primeflix.DTO;
 using Primeflix.Models;
+using Primeflix.Services;
 
 namespace Primeflix.Controllers
 {
@@ -16,95 +18,133 @@ namespace Primeflix.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly Data.DatabaseContext _context;
+        private IProductRepository _productRepository;
+        private IGenreRepository _genreRepository;
 
-        public ProductsController(Data.DatabaseContext context)
+        public ProductsController(IProductRepository productRepository, IGenreRepository genreRepository)
         {
-            _context = context;
+            _productRepository = productRepository;
+            _genreRepository = genreRepository;
         }
 
-        // GET: api/Products
+        //api/products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProduct()
+        [ProducesResponseType(400)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        public IActionResult GetProducts()
         {
-            return await _context.Products.Include(p => p.ActorsMovies).ToListAsync();
-        }
+            var products = _productRepository.GetProducts().ToList();
 
-        // GET: api/Products/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (product == null)
+            var productsDto = new List<ProductDto>();
+            foreach (var product in products)
             {
-                return NotFound();
-            }
-
-            return product;
-        }
-
-        // PUT: api/Products/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
-        {
-            if (id != product.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(product).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProductExists(id))
+                productsDto.Add(new ProductDto
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                    Id = product.Id,
+                    Title = product.Title,
+                    ReleaseDate = product.ReleaseDate,
+                    Duration = product.Duration,
+                    Stock = product.Stock,
+                    Rating = product.Rating,
+                    Format = product.Format,
+                    PictureUrl = product.PictureUrl,
+                    Price = product.Price
+                });
             }
-
-            return NoContent();
+            return Ok(productsDto);
         }
 
-        // POST: api/Products
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct(Product product)
+        //api/products/productId
+        [HttpGet("{productId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        public IActionResult GetProduct(int productId)
         {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
-        }
-
-        // DELETE: api/Products/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
+            if (!_productRepository.ProductExists(productId))
                 return NotFound();
-            }
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            var product = _productRepository.GetProduct(productId);
 
-            return NoContent();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var productDto = new ProductDto()
+            {
+                Id = product.Id,
+                Title = product.Title,
+                ReleaseDate = product.ReleaseDate,
+                Duration = product.Duration,
+                Stock = product.Stock,
+                Rating = product.Rating,
+                Format = product.Format,
+                PictureUrl = product.PictureUrl,
+                Price = product.Price
+            };
+
+            return Ok(productDto);
         }
 
-        private bool ProductExists(int id)
+        //api/products/Title
+        [HttpGet("{Title}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        public IActionResult GetProduct(string title)
         {
-            return _context.Products.Any(e => e.Id == id);
+            if (!_productRepository.ProductExists(title))
+                return NotFound();
+
+            var product = _productRepository.GetProduct(title);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var productDto = new ProductDto()
+            {
+                Id = product.Id,
+                Title = product.Title,
+                ReleaseDate = product.ReleaseDate,
+                Duration = product.Duration,
+                Stock = product.Stock,
+                Rating = product.Rating,
+                Format = product.Format,
+                PictureUrl = product.PictureUrl,
+                Price = product.Price
+            };
+
+            return Ok(productDto);
+        }
+
+        //api/products/genres/productId
+        [HttpGet("genres/{productId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
+        public IActionResult GetGenresOfAProduct(int productId)
+        {
+            if (!_productRepository.ProductExists(productId))
+                return NotFound();
+
+            var genres = _genreRepository.GetGenresOfAProduct(productId);
+
+            var genresDto = new List<GenreDto>();
+            foreach (var genre in genres)
+            {
+                genresDto.Add(new GenreDto()
+                {
+                    Id = genre.Id,
+                    Name = genre.Name
+                });
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            return Ok(genresDto);
         }
     }
 }

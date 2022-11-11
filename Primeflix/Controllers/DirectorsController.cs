@@ -9,10 +9,12 @@ namespace Primeflix.Controllers
     public class DirectorsController : Controller
     {
         private IDirectorRepository _directorRepository;
+        private IProductRepository _productRepository;
 
-        public DirectorsController(IDirectorRepository directorRepository)
+        public DirectorsController(IDirectorRepository directorRepository, IProductRepository productRepository)
         {
             _directorRepository = directorRepository;
+            _productRepository = productRepository;
         }
 
         //api/directors

@@ -15,6 +15,8 @@ builder.Services.AddMvc();
 builder.Services.AddControllers().AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IDirectorRepository, DirectorRepository>();
+builder.Services.AddScoped<IActorRepository, ActorRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddEntityFrameworkMySQL().AddDbContext<DatabaseContext>(options =>
 {
     options.UseMySQL(builder.Configuration.GetConnectionString("DBConnection"));
