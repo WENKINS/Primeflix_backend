@@ -9,6 +9,7 @@ namespace Primeflix.Services
         ICollection<Genre> GetGenresOfAProduct(int productId);
         ICollection<Product> GetProductsOfAGenre(int genreId);
         bool GenreExists(int genreId);
+        bool IsDuplicate(int genreId, string genreName);
 
     }
 }

@@ -36,5 +36,11 @@ namespace Primeflix.Services
         {
             return _databaseContext.ProductsGenres.Where(g => g.GenreId == genreId).Select(p => p.Product).ToList();
         }
+
+        public bool IsDuplicate(int genreId, string genreName)
+        {
+            var genre = _databaseContext.Genres.Where(g => g.Name.Trim().ToUpper() == genreName.Trim().ToUpper() && g.Id != genreId).FirstOrDefault();
+            return genre == null ? false : true;
+        }
     }
 }

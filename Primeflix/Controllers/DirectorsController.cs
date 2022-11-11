@@ -73,9 +73,13 @@ namespace Primeflix.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
         public IActionResult GetDirectorsOfAProduct(int productId)
         {
-            // validate if product exists too (to do)
+            if (!_productRepository.ProductExists(productId))
+                return NotFound();
 
             var directors = _directorRepository.GetDirectorsOfAProduct(productId);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             var celebritiesDto = new List<CelebrityDto>();
             foreach (var director in directors)
