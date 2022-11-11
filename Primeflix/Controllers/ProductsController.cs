@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Primeflix.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
-using Primeflix.Models;
 using Primeflix.Services;
 
 namespace Primeflix.Controllers
@@ -25,7 +17,7 @@ namespace Primeflix.Controllers
         {
             _productRepository = productRepository;
             _genreRepository = genreRepository;
-        }
+        } 
 
         //api/products
         [HttpGet]
@@ -57,8 +49,8 @@ namespace Primeflix.Controllers
             return Ok(productsDto);
         }
 
-        //api/products/productId
-        [HttpGet("{productId}")]
+        //api/products/id/productId
+        [HttpGet("id/{productId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
@@ -88,8 +80,8 @@ namespace Primeflix.Controllers
             return Ok(productDto);
         }
 
-        //api/products/Title
-        [HttpGet("{Title}")]
+        //api/products/title/Title
+        [HttpGet("title/{title}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]

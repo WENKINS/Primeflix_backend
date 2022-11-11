@@ -11,5 +11,10 @@ namespace Primeflix.Services
         bool GenreExists(int genreId);
         bool IsDuplicate(int genreId, string genreName);
 
+        bool CreateGenre(Genre genre);
+        bool UpdateGenre(Genre genre);
+        bool DeleteGenre(Genre genre);
+        bool Save();
+
     }
 }

@@ -8,11 +8,13 @@ namespace Primeflix.Models
     {
         [Key]
         [Column("genre_id")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [Column("genre_name")]
+        [Required]
         public string Name { get; set; }
 
         // Relationships
-        public virtual ICollection<ProductGenre> ProductGenre { get; set; }
+        public virtual ICollection<ProductGenre>? ProductGenre { get; set; }
     }
 }
