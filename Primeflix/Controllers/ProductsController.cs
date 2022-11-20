@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
+using Primeflix.Models;
 using Primeflix.Services;
 
 namespace Primeflix.Controllers
@@ -12,11 +13,13 @@ namespace Primeflix.Controllers
     {
         private IProductRepository _productRepository;
         private IGenreRepository _genreRepository;
+        private IDirectorRepository _directorRepository;
 
-        public ProductsController(IProductRepository productRepository, IGenreRepository genreRepository)
+        public ProductsController(IProductRepository productRepository, IGenreRepository genreRepository, IDirectorRepository directorRepository)
         {
             _productRepository = productRepository;
             _genreRepository = genreRepository;
+            _directorRepository = directorRepository;
         } 
 
         //api/products
@@ -137,6 +140,107 @@ namespace Primeflix.Controllers
                 return BadRequest(ModelState);
 
             return Ok(genresDto);
+        }
+
+        //api/products
+        [HttpPost]
+        [ProducesResponseType(201, Type = typeof(Product))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        public IActionResult CreateProduct([FromBody] Product productToCreate)
+        {
+            if (productToCreate == null)
+                return BadRequest(ModelState);
+
+            var product = _productRepository.GetProducts()
+                .Where(p => p.Title.Trim().ToUpper() == productToCreate.Title.Trim().ToUpper())
+                .FirstOrDefault();
+
+            if (product != null)
+            {
+                var existingDirector = _directorRepository.GetDirectorsOfAProduct(product.Id);
+                var newDirector = _directorRepository.GetDirectorsOfAProduct(productToCreate.Id);
+                if (existingDirector.SequenceEqual(newDirector))
+                {
+                    ModelState.AddModelError("", $"Product {productToCreate.Title} already exists");
+                    return StatusCode(422, ModelState);
+                }
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_productRepository.CreateProduct(productToCreate))
+            {
+                ModelState.AddModelError("", $"Something went wrong saving {productToCreate.Title}");
+                return StatusCode(500, ModelState);
+            }
+
+            return CreatedAtRoute("GetProduct", new { genreId = productToCreate.Id }, productToCreate);
+        }
+
+        //api/products/productId
+        [HttpPut("{productId}")]
+        [ProducesResponseType(204)] // no content
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        public IActionResult UpdateProduct(int productId, [FromBody] Product updatedProduct)
+        {
+            if (updatedProduct == null)
+                return BadRequest(ModelState);
+
+            if (productId != updatedProduct.Id)
+                return BadRequest(ModelState);
+
+            if (!_productRepository.ProductExists(productId))
+                return NotFound();
+
+            if (_productRepository.IsDuplicate(productId, updatedProduct.Title))
+            {
+                ModelState.AddModelError("", $"Product {updatedProduct.Title} already exists");
+                return StatusCode(422, ModelState);
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_productRepository.UpdateProduct(updatedProduct))
+            {
+                ModelState.AddModelError("", $"Something went wrong update {updatedProduct.Title}");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        //api/products/productId
+        [HttpDelete("{productId}")]
+        [ProducesResponseType(204)] // no content
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        public IActionResult DeleteProduct(int productId)
+        {
+            if (!_productRepository.ProductExists(productId))
+                return NotFound();
+
+            var productToDelete = _productRepository.GetProduct(productId);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_productRepository.DeleteProduct(productToDelete))
+            {
+                ModelState.AddModelError("", $"Something went wrong deleting {productToDelete.Title}");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
         }
     }
 }
