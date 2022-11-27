@@ -10,8 +10,8 @@ namespace Primeflix.Services
         bool ProductExists(int productId);
         bool ProductExists(string title);
         bool IsDuplicate(int productId, string productTitle);
-        bool CreateProduct(Product product);
-        bool UpdateProduct(Product product);
+        bool CreateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
+        bool UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
         bool DeleteProduct(Product product);
         bool Save();
     }

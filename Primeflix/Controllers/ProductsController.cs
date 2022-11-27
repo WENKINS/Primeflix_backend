@@ -142,74 +142,52 @@ namespace Primeflix.Controllers
             return Ok(genresDto);
         }
 
-        //api/products
+        //api/products?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
         [HttpPost]
         [ProducesResponseType(201, Type = typeof(Product))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult CreateProduct([FromBody] Product productToCreate)
+        public IActionResult CreateProduct([FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToCreate)
         {
-            if (productToCreate == null)
-                return BadRequest(ModelState);
-
-            var product = _productRepository.GetProducts()
-                .Where(p => p.Title.Trim().ToUpper() == productToCreate.Title.Trim().ToUpper())
-                .FirstOrDefault();
-
-            if (product != null)
-            {
-                var existingDirector = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
-                var newDirector = _celebrityRepository.GetDirectorsOfAProduct(productToCreate.Id);
-                if (existingDirector.SequenceEqual(newDirector))
-                {
-                    ModelState.AddModelError("", $"Product {productToCreate.Title} already exists");
-                    return StatusCode(422, ModelState);
-                }
-            }
+            var statusCode = ValidateProduct(dirId, actId, genresId, productToCreate);
 
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return StatusCode(statusCode.StatusCode);
 
-            if (!_productRepository.CreateProduct(productToCreate))
+            if (!_productRepository.CreateProduct(productToCreate, dirId, actId, genresId))
             {
-                ModelState.AddModelError("", $"Something went wrong saving {productToCreate.Title}");
+                ModelState.AddModelError("", $"Something went wrong saving the product {productToCreate.Title}");
                 return StatusCode(500, ModelState);
             }
 
             return CreatedAtRoute("GetProduct", new { productId = productToCreate.Id }, productToCreate);
         }
 
-        //api/products/productId
+        //api/products/productId?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
         [HttpPut("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult UpdateProduct(int productId, [FromBody] Product updatedProduct)
+        public IActionResult UpdateProduct(int productId, [FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToUpdate)
         {
-            if (updatedProduct == null)
-                return BadRequest(ModelState);
 
-            if (productId != updatedProduct.Id)
-                return BadRequest(ModelState);
+            var statusCode = ValidateProduct(dirId, actId, genresId, productToUpdate);
+
+            if (productId != productToUpdate.Id)
+                return BadRequest();
 
             if (!_productRepository.ProductExists(productId))
                 return NotFound();
 
-            if (_productRepository.IsDuplicate(productId, updatedProduct.Title))
-            {
-                ModelState.AddModelError("", $"Product {updatedProduct.Title} already exists");
-                return StatusCode(422, ModelState);
-            }
-
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return StatusCode(statusCode.StatusCode);
 
-            if (!_productRepository.UpdateProduct(updatedProduct))
+            if (!_productRepository.UpdateProduct(productToUpdate, dirId, actId, genresId))
             {
-                ModelState.AddModelError("", $"Something went wrong update {updatedProduct.Title}");
+                ModelState.AddModelError("", $"Something went wrong updating the product {productToUpdate.Title}");
                 return StatusCode(500, ModelState);
             }
 
@@ -238,6 +216,56 @@ namespace Primeflix.Controllers
             {
                 ModelState.AddModelError("", $"Something went wrong deleting {productToDelete.Title}");
                 return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        private StatusCodeResult ValidateProduct(List<int> directorsId, List<int> actorsId, List<int> genresId, Product product)
+        {
+            if (product == null || directorsId.Count() <= 0 || actorsId.Count() <= 0 || genresId.Count() <= 0)
+            {
+                ModelState.AddModelError("", "Missing product, director(s), actor(s), or genre(s)");
+                return BadRequest();
+            }
+
+            if(_productRepository.IsDuplicate(product.Id, product.Title))
+            {
+                ModelState.AddModelError("", "Duplicate title");
+                return StatusCode(422);
+            }
+
+            foreach(var id in directorsId)
+            {
+                if(!_celebrityRepository.CelebrityExists(id))
+                {
+                    ModelState.AddModelError("", "Celebrity Not Found");
+                    return StatusCode(404);
+                }
+            }
+
+            foreach (var id in actorsId)
+            {
+                if (!_celebrityRepository.CelebrityExists(id))
+                {
+                    ModelState.AddModelError("", "Celebrity Not Found");
+                    return StatusCode(404);
+                }
+            }
+
+            foreach (var id in genresId)
+            {
+                if (!_genreRepository.GenreExists(id))
+                {
+                    ModelState.AddModelError("", "Genre Not Found");
+                    return StatusCode(404);
+                }
+            }
+
+            if(!ModelState.IsValid)
+            {
+                ModelState.AddModelError("", "Critical Error");
+                return BadRequest();
             }
 
             return NoContent();
