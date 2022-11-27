@@ -13,13 +13,13 @@ namespace Primeflix.Controllers
     {
         private IProductRepository _productRepository;
         private IGenreRepository _genreRepository;
-        private IDirectorRepository _directorRepository;
+        private ICelebrityRepository _celebrityRepository;
 
-        public ProductsController(IProductRepository productRepository, IGenreRepository genreRepository, IDirectorRepository directorRepository)
+        public ProductsController(IProductRepository productRepository, IGenreRepository genreRepository, ICelebrityRepository celebrityRepository)
         {
             _productRepository = productRepository;
             _genreRepository = genreRepository;
-            _directorRepository = directorRepository;
+            _celebrityRepository = celebrityRepository;
         } 
 
         //api/products
@@ -53,7 +53,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/id/productId
-        [HttpGet("id/{productId}")]
+        [HttpGet("id/{productId}", Name = "GetProduct")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
@@ -159,8 +159,8 @@ namespace Primeflix.Controllers
 
             if (product != null)
             {
-                var existingDirector = _directorRepository.GetDirectorsOfAProduct(product.Id);
-                var newDirector = _directorRepository.GetDirectorsOfAProduct(productToCreate.Id);
+                var existingDirector = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
+                var newDirector = _celebrityRepository.GetDirectorsOfAProduct(productToCreate.Id);
                 if (existingDirector.SequenceEqual(newDirector))
                 {
                     ModelState.AddModelError("", $"Product {productToCreate.Title} already exists");
@@ -177,7 +177,7 @@ namespace Primeflix.Controllers
                 return StatusCode(500, ModelState);
             }
 
-            return CreatedAtRoute("GetProduct", new { genreId = productToCreate.Id }, productToCreate);
+            return CreatedAtRoute("GetProduct", new { productId = productToCreate.Id }, productToCreate);
         }
 
         //api/products/productId

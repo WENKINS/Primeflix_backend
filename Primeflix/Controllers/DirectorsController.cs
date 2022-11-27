@@ -8,12 +8,12 @@ namespace Primeflix.Controllers
     [ApiController]
     public class DirectorsController : Controller
     {
-        private IDirectorRepository _directorRepository;
+        private ICelebrityRepository _celebrityRepository;
         private IProductRepository _productRepository;
 
-        public DirectorsController(IDirectorRepository directorRepository, IProductRepository productRepository)
+        public DirectorsController(ICelebrityRepository celebrityRepository, IProductRepository productRepository)
         {
-            _directorRepository = directorRepository;
+            _celebrityRepository = celebrityRepository;
             _productRepository = productRepository;
         }
 
@@ -23,7 +23,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
         public IActionResult GetDirectors()
         {
-            var celebrities = _directorRepository.GetDirectors();
+            var celebrities = _celebrityRepository.GetDirectors();
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -41,17 +41,17 @@ namespace Primeflix.Controllers
             return Ok(celebritiesDto);
         }
 
-        //api/directors/directorId
-        [HttpGet("{directorId}")]
+        //api/directors/celebrityId
+        [HttpGet("{celebrityId}", Name = "GetDirector")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
-        public IActionResult GetDirector(int directorId)
+        public IActionResult GetDirector(int celebrityId)
         {
-            if (!_directorRepository.DirectorExists(directorId))
+            if (!_celebrityRepository.DirectorExists(celebrityId))
                 return NotFound();
 
-            var director = _directorRepository.GetDirector(directorId);
+            var director = _celebrityRepository.GetDirector(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -76,7 +76,7 @@ namespace Primeflix.Controllers
             if (!_productRepository.ProductExists(productId))
                 return NotFound();
 
-            var directors = _directorRepository.GetDirectorsOfAProduct(productId);
+            var directors = _celebrityRepository.GetDirectorsOfAProduct(productId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -98,17 +98,17 @@ namespace Primeflix.Controllers
             return Ok(celebritiesDto);
         }
 
-        //api/directors/directorId/products
-        [HttpGet("{directorId}/products")]
+        //api/directors/celebrityId/products
+        [HttpGet("{celebrityId}/products")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public IActionResult GetProductsOfADirector(int directorId)
+        public IActionResult GetProductsOfADirector(int celebrityId)
         {
-            if (!_directorRepository.DirectorExists(directorId))
+            if (!_celebrityRepository.DirectorExists(celebrityId))
                 return NotFound();
 
-            var products = _directorRepository.GetProductsOfADirector(directorId);
+            var products = _celebrityRepository.GetProductsOfADirector(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -134,5 +134,4 @@ namespace Primeflix.Controllers
             return Ok(productsDto);
         }
     }
-
 }

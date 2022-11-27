@@ -16,7 +16,6 @@ namespace Primeflix.Controllers
     [ApiController]
     public class ActorsController : Controller
     {
-        //private IActorRepository _actorRepository;
         private ICelebrityRepository _celebrityRepository;
         private IProductRepository _productRepository;
 
@@ -50,26 +49,26 @@ namespace Primeflix.Controllers
             return Ok(celebritiesDto);
         }
 
-        //api/actors/actorId
-        [HttpGet("{actorId}")]
+        //api/actors/celebrityId
+        [HttpGet("{celebrityId}", Name = "GetActor")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
-        public IActionResult GetActor(int actorId)
+        public IActionResult GetActor(int celebrityId)
         {
-            if (!_celebrityRepository.ActorExists(actorId))
+            if (!_celebrityRepository.ActorExists(celebrityId))
                 return NotFound();
 
-            var director = _celebrityRepository.GetActor(actorId);
+            var actor = _celebrityRepository.GetActor(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var celebrityDto = new CelebrityDto()
             {
-                Id = director.Id,
-                FirstName = director.FirstName,
-                LastName = director.LastName
+                Id = actor.Id,
+                FirstName = actor.FirstName,
+                LastName = actor.LastName
             };
 
             return Ok(celebrityDto);
@@ -104,17 +103,17 @@ namespace Primeflix.Controllers
             return Ok(celebritiesDto);
         }
 
-        //api/actors/actorId/products
-        [HttpGet("{actorId}/products")]
+        //api/actors/celebrityId/products
+        [HttpGet("{celebrityId}/products")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public IActionResult GetProductsOfADirector(int actorId)
+        public IActionResult GetProductsOfAnActor(int celebrityId)
         {
-            if (!_celebrityRepository.ActorExists(actorId))
+            if (!_celebrityRepository.ActorExists(celebrityId))
                 return NotFound();
 
-            var products = _celebrityRepository.GetProductsOfAnActor(actorId);
+            var products = _celebrityRepository.GetProductsOfAnActor(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -140,5 +139,4 @@ namespace Primeflix.Controllers
             return Ok(productsDto);
         }
     }
-
 }
