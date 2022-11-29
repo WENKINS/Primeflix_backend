@@ -10,11 +10,13 @@ namespace Primeflix.Controllers
     {
         private ICelebrityRepository _celebrityRepository;
         private IProductRepository _productRepository;
+        private IGenreRepository _genreRepository;
 
-        public DirectorsController(ICelebrityRepository celebrityRepository, IProductRepository productRepository)
+        public DirectorsController(ICelebrityRepository celebrityRepository, IProductRepository productRepository, IGenreRepository genreRepository)
         {
             _celebrityRepository = celebrityRepository;
             _productRepository = productRepository;
+            _genreRepository = genreRepository;
         }
 
         //api/directors
@@ -117,6 +119,44 @@ namespace Primeflix.Controllers
 
             foreach (var product in products)
             {
+                var directors = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
+                var directorsDto = new List<CelebrityDto>();
+
+                foreach (var director in directors)
+                {
+                    directorsDto.Add(new CelebrityDto
+                    {
+                        Id = director.Id,
+                        FirstName = director.FirstName,
+                        LastName = director.LastName
+                    });
+                }
+
+                var actors = _celebrityRepository.GetActorsOfAProduct(product.Id);
+                var actorsDto = new List<CelebrityDto>();
+
+                foreach (var actor in actors)
+                {
+                    actorsDto.Add(new CelebrityDto
+                    {
+                        Id = actor.Id,
+                        FirstName = actor.FirstName,
+                        LastName = actor.LastName
+                    });
+                }
+
+                var genres = _genreRepository.GetGenresOfAProduct(product.Id);
+                var genresDto = new List<GenreDto>();
+
+                foreach (var genre in genres)
+                {
+                    genresDto.Add(new GenreDto
+                    {
+                        Id = genre.Id,
+                        Name = genre.Name
+                    });
+                }
+
                 productsDto.Add(new ProductDto
                 {
                     Id = product.Id,
@@ -127,7 +167,10 @@ namespace Primeflix.Controllers
                     Rating = product.Rating,
                     Format = product.Format,
                     PictureUrl = product.PictureUrl,
-                    Price = product.Price
+                    Price = product.Price,
+                    Directors = directorsDto,
+                    Actors = actorsDto,
+                    Genres = genresDto
                 });
             }
 

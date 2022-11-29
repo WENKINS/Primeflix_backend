@@ -36,6 +36,44 @@ namespace Primeflix.Controllers
             var productsDto = new List<ProductDto>();
             foreach (var product in products)
             {
+                var directors = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
+                var directorsDto = new List<CelebrityDto>();
+
+                foreach(var director in directors)
+                {
+                    directorsDto.Add(new CelebrityDto
+                    {
+                        Id = director.Id,
+                        FirstName = director.FirstName,
+                        LastName = director.LastName
+                    });
+                }
+
+                var actors = _celebrityRepository.GetActorsOfAProduct(product.Id);
+                var actorsDto = new List<CelebrityDto>();
+
+                foreach (var actor in actors)
+                {
+                    actorsDto.Add(new CelebrityDto
+                    {
+                        Id = actor.Id,
+                        FirstName = actor.FirstName,
+                        LastName = actor.LastName
+                    });
+                }
+
+                var genres = _genreRepository.GetGenresOfAProduct(product.Id);
+                var genresDto = new List<GenreDto>();
+
+                foreach (var genre in genres)
+                {
+                    genresDto.Add(new GenreDto
+                    {
+                        Id = genre.Id,
+                        Name = genre.Name
+                    });
+                }
+
                 productsDto.Add(new ProductDto
                 {
                     Id = product.Id,
@@ -46,14 +84,17 @@ namespace Primeflix.Controllers
                     Rating = product.Rating,
                     Format = product.Format,
                     PictureUrl = product.PictureUrl,
-                    Price = product.Price
-                });
+                    Price = product.Price,
+                    Directors = directorsDto,
+                    Actors = actorsDto,
+                    Genres = genresDto
+                }) ;
             }
             return Ok(productsDto);
         }
 
-        //api/products/id/productId
-        [HttpGet("id/{productId}", Name = "GetProduct")]
+        //api/products/productId
+        [HttpGet("{productId}", Name = "GetProduct")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
@@ -67,6 +108,44 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var directors = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
+            var directorsDto = new List<CelebrityDto>();
+
+            foreach (var director in directors)
+            {
+                directorsDto.Add(new CelebrityDto
+                {
+                    Id = director.Id,
+                    FirstName = director.FirstName,
+                    LastName = director.LastName
+                });
+            }
+
+            var actors = _celebrityRepository.GetActorsOfAProduct(product.Id);
+            var actorsDto = new List<CelebrityDto>();
+
+            foreach (var actor in actors)
+            {
+                actorsDto.Add(new CelebrityDto
+                {
+                    Id = actor.Id,
+                    FirstName = actor.FirstName,
+                    LastName = actor.LastName
+                });
+            }
+
+            var genres = _genreRepository.GetGenresOfAProduct(product.Id);
+            var genresDto = new List<GenreDto>();
+
+            foreach (var genre in genres)
+            {
+                genresDto.Add(new GenreDto
+                {
+                    Id = genre.Id,
+                    Name = genre.Name
+                });
+            }
+
             var productDto = new ProductDto()
             {
                 Id = product.Id,
@@ -77,14 +156,17 @@ namespace Primeflix.Controllers
                 Rating = product.Rating,
                 Format = product.Format,
                 PictureUrl = product.PictureUrl,
-                Price = product.Price
+                Price = product.Price,
+                Directors = directorsDto,
+                Actors = actorsDto,
+                Genres = genresDto
             };
 
             return Ok(productDto);
         }
 
         //api/products/title/Title
-        [HttpGet("title/{title}")]
+        /*[HttpGet("title/{title}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
@@ -98,6 +180,44 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var directors = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
+            var directorsDto = new List<CelebrityDto>();
+
+            foreach (var director in directors)
+            {
+                directorsDto.Add(new CelebrityDto
+                {
+                    Id = director.Id,
+                    FirstName = director.FirstName,
+                    LastName = director.LastName
+                });
+            }
+
+            var actors = _celebrityRepository.GetActorsOfAProduct(product.Id);
+            var actorsDto = new List<CelebrityDto>();
+
+            foreach (var actor in actors)
+            {
+                actorsDto.Add(new CelebrityDto
+                {
+                    Id = actor.Id,
+                    FirstName = actor.FirstName,
+                    LastName = actor.LastName
+                });
+            }
+
+            var genres = _genreRepository.GetGenresOfAProduct(product.Id);
+            var genresDto = new List<GenreDto>();
+
+            foreach (var genre in genres)
+            {
+                genresDto.Add(new GenreDto
+                {
+                    Id = genre.Id,
+                    Name = genre.Name
+                });
+            }
+
             var productDto = new ProductDto()
             {
                 Id = product.Id,
@@ -108,11 +228,14 @@ namespace Primeflix.Controllers
                 Rating = product.Rating,
                 Format = product.Format,
                 PictureUrl = product.PictureUrl,
-                Price = product.Price
+                Price = product.Price,
+                Directors = directorsDto,
+                Actors = actorsDto,
+                Genres = genresDto
             };
 
             return Ok(productDto);
-        }
+        }*/
 
         //api/products/genres/productId
         [HttpGet("genres/{productId}")]

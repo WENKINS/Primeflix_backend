@@ -1,4 +1,6 @@
-﻿namespace Primeflix.DTO
+﻿using Primeflix.Models;
+
+namespace Primeflix.DTO
 {
     public class ProductDto
     {
@@ -11,5 +13,8 @@
         public string Format { get; set; }
         public string PictureUrl { get; set; }
         public double Price { get; set; }
+        public List<CelebrityDto> Directors { get; set; }
+        public List<CelebrityDto> Actors { get; set; }
+        public List<GenreDto> Genres { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Primeflix.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using Primeflix.Data;
 using Primeflix.Models;
 
 namespace Primeflix.Services
@@ -70,7 +71,11 @@ namespace Primeflix.Services
 
         public ICollection<Product> GetProducts()
         {
-            return _databaseContext.Products.OrderBy(p => p.Title).ToList();
+            return _databaseContext.Products.OrderBy(p => p.Title)
+                .Include(p => p.DirectorsMovies)
+                .Include(p => p.ActorsMovies)
+                .Include(p => p.ProductGenre)
+                .ToList();
         }
 
         public bool IsDuplicate(int productId, string productTitle)

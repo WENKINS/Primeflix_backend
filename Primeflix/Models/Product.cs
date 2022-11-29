@@ -32,6 +32,5 @@ namespace Primeflix.Models
         public virtual ICollection<Actor>? ActorsMovies { get; set; }
         public virtual ICollection<Director>? DirectorsMovies { get; set; }
         public virtual ICollection<ProductGenre>? ProductGenre { get; set; }
-
     }   
 }
