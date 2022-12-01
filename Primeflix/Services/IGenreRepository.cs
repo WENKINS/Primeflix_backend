@@ -6,6 +6,7 @@ namespace Primeflix.Services
     {
         ICollection<Genre> GetGenres();
         Genre GetGenre(int genreId);
+        Genre GetGenre(string genreName);
         ICollection<Genre> GetGenresOfAProduct(int productId);
         ICollection<Product> GetProductsOfAGenre(int genreId);
         bool GenreExists(int genreId);

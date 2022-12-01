@@ -34,6 +34,11 @@ namespace Primeflix.Services
             return _databaseContext.Genres.Where(g => g.Id == genreId).FirstOrDefault();
         }
 
+        public Genre GetGenre(string genreName)
+        {
+            return _databaseContext.Genres.Where(g => g.Name == genreName).FirstOrDefault();
+        }
+
         public ICollection<Genre> GetGenres()
         {
             return _databaseContext.Genres.OrderBy(g => g.Name).ToList();

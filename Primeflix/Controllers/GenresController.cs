@@ -98,7 +98,7 @@ namespace Primeflix.Controllers
         [HttpGet("{genreId}/products")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
         public IActionResult GetProductsOfAGenre(int genreId)
         {
             if (!_genreRepository.GenreExists(genreId))
@@ -109,11 +109,11 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var productsDto = new List<ProductDto>();
+            var productsDto = new List<ProductDetailsDto>();
 
             foreach (var product in products)
             {
-                productsDto.Add(new ProductDto
+                productsDto.Add(new ProductDetailsDto
                 {
                     Id = product.Id,
                     Title = product.Title,

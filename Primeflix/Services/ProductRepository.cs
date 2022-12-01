@@ -59,6 +59,160 @@ namespace Primeflix.Services
             return Save();
         }
 
+        public ICollection<Product> FilterResults(bool recentlyAdded, string format, List<int> genresId)
+        {
+            var products = new List<Product>();
+
+            if(genresId != null)
+            {
+                foreach (var genreId in genresId)
+                {
+                    if (format == "All")
+                    {
+                        if (recentlyAdded)
+                        {
+                            products.AddRange(_databaseContext.ProductsGenres
+                                .Where(g => g.GenreId == genreId)
+                                .Select(p => p.Product)
+                                .OrderBy(p => p.Title)
+                                .Take(3)
+                                .ToList());
+                        }
+
+                        else
+                        {
+                            products.AddRange(_databaseContext.ProductsGenres
+                                .Where(g => g.GenreId == genreId)
+                                .Select(p => p.Product)
+                                .OrderBy(p => p.Title)
+                                .ToList());
+                        }
+                    }
+
+                    if (format == "film")
+                    {
+                        if (recentlyAdded)
+                        {
+                            products.AddRange(_databaseContext.ProductsGenres
+                                .Where(g => g.GenreId == genreId)
+                                .Select(p => p.Product)
+                                .OrderBy(p => p.Title)
+                                .Where(p => p.Format == format)
+                                .Take(3)
+                                .ToList());
+                        }
+
+                        else
+                        {
+                            products.AddRange(_databaseContext.ProductsGenres
+                                .Where(g => g.GenreId == genreId)
+                                .Select(p => p.Product)
+                                .OrderBy(p => p.Title)
+                                .Where(p => p.Format == format)
+                                .ToList());
+                        }
+                    }
+
+                    if (format == "serie")
+                    {
+                        if (recentlyAdded)
+                        {
+                            products.AddRange(_databaseContext.ProductsGenres
+                                .Where(g => g.GenreId == genreId)
+                                .Select(p => p.Product)
+                                .OrderBy(p => p.Title)
+                                .Where(p => p.Format == format)
+                                .Take(3)
+                                .ToList());
+                        }
+
+                        else
+                        {
+                            products.AddRange(_databaseContext.ProductsGenres
+                                .Where(g => g.GenreId == genreId)
+                                .Select(p => p.Product)
+                                .OrderBy(p => p.Title)
+                                .Where(p => p.Format == format)
+                                .ToList());
+                        }
+                    }
+                }
+            }
+
+            else
+            {
+                if (format == "All")
+                {
+                    if (recentlyAdded)
+                    {
+                        products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                            .Include(p => p.DirectorsMovies)
+                            .Include(p => p.ActorsMovies)
+                            .Include(p => p.ProductGenre)
+                            .Take(3)
+                            .ToList();
+                        return products;
+                    }
+
+                    products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                        .Include(p => p.DirectorsMovies)
+                        .Include(p => p.ActorsMovies)
+                        .Include(p => p.ProductGenre)
+                        .ToList();
+                    return products;
+                }
+
+                if (format == "film")
+                {
+                    if (recentlyAdded)
+                    {
+                        products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                            .Include(p => p.DirectorsMovies)
+                            .Include(p => p.ActorsMovies)
+                            .Include(p => p.ProductGenre)
+                            .Where(p => p.Format == format)
+                            .Take(3)
+                            .ToList();
+
+                        return products;
+                    }
+
+                    products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                        .Include(p => p.DirectorsMovies)
+                        .Include(p => p.ActorsMovies)
+                        .Include(p => p.ProductGenre)
+                        .Where(p => p.Format == format)
+                        .ToList();
+                    return products;
+                }
+
+                if (format == "serie")
+                {
+                    if (recentlyAdded)
+                    {
+                        products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                            .Include(p => p.DirectorsMovies)
+                            .Include(p => p.ActorsMovies)
+                            .Include(p => p.ProductGenre)
+                            .Where(p => p.Format == format)
+                            .Take(3)
+                            .ToList();
+                        return products;
+                    }
+
+                    products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                        .Include(p => p.DirectorsMovies)
+                        .Include(p => p.ActorsMovies)
+                        .Include(p => p.ProductGenre)
+                        .Where(p => p.Format == format)
+                        .ToList();
+                    return products;
+                }
+            }
+
+            return products;
+        }
+
         public Product GetProduct(int productId)
         {
             return _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
