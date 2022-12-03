@@ -140,7 +140,9 @@ namespace Primeflix.Controllers
                     Id = product.Id,
                     Title = product.Title,
                     ReleaseDate = product.ReleaseDate,
+                    Stock = product.Stock,
                     Rating = product.Rating,
+                    Format = product.Format,
                     PictureUrl = product.PictureUrl,
                     Price = product.Price,
                     Genres = genresDto
