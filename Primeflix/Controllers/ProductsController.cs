@@ -96,7 +96,7 @@ namespace Primeflix.Controllers
         //api/products/params
         [HttpGet(Name = "GetProducts")]
         [ProducesResponseType(400)]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
         public IActionResult GetProducts([FromQuery]bool recentlyAdded = false, [FromQuery]string? format = "All", [FromQuery]List<string>? genres = null)
         {
             List<int> genresId = new List<int>();
@@ -119,36 +119,10 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var productsDto = new List<ProductDetailsDto>();
+            var productsDto = new List<ProductDto>();
 
             foreach (var product in products)
             {
-                var directors = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
-                var directorsDto = new List<CelebrityDto>();
-
-                foreach (var director in directors)
-                {
-                    directorsDto.Add(new CelebrityDto
-                    {
-                        Id = director.Id,
-                        FirstName = director.FirstName,
-                        LastName = director.LastName
-                    });
-                }
-
-                var actors = _celebrityRepository.GetActorsOfAProduct(product.Id);
-                var actorsDto = new List<CelebrityDto>();
-
-                foreach (var actor in actors)
-                {
-                    actorsDto.Add(new CelebrityDto
-                    {
-                        Id = actor.Id,
-                        FirstName = actor.FirstName,
-                        LastName = actor.LastName
-                    });
-                }
-
                 var oGenres = _genreRepository.GetGenresOfAProduct(product.Id);
                 var genresDto = new List<GenreDto>();
 
@@ -161,19 +135,14 @@ namespace Primeflix.Controllers
                     });
                 }
 
-                productsDto.Add(new ProductDetailsDto
+                productsDto.Add(new ProductDto
                 {
                     Id = product.Id,
                     Title = product.Title,
                     ReleaseDate = product.ReleaseDate,
-                    Duration = product.Duration,
-                    Stock = product.Stock,
                     Rating = product.Rating,
-                    Format = product.Format,
                     PictureUrl = product.PictureUrl,
                     Price = product.Price,
-                    Directors = directorsDto,
-                    Actors = actorsDto,
                     Genres = genresDto
                 });
             }
