@@ -14,18 +14,21 @@ namespace Primeflix.Controllers
         private IProductRepository _productRepository;
         private IFormatRepository _formatRepository;
         private IGenreTranslationRepository _genreTranslationRepository;
+        private IProductTranslationRepository _productTranslationRepository;
 
         public GenresController(
             IGenreRepository genreRepository, 
             IProductRepository productRepository, 
             IFormatRepository formatRepository,
-            IGenreTranslationRepository genreTranslationRepository
+            IGenreTranslationRepository genreTranslationRepository,
+            IProductTranslationRepository productTranslationRepository
             )
         {
             _genreRepository = genreRepository;
             _productRepository = productRepository;
             _formatRepository = formatRepository;
             _genreTranslationRepository = genreTranslationRepository;
+            _productTranslationRepository = productTranslationRepository;
         }
 
         //api/genres/languageCode
@@ -108,11 +111,11 @@ namespace Primeflix.Controllers
         }
 
         //api/genres/genresId/products
-        [HttpGet("{genreId}/products")]
+        [HttpGet("{languageCode}/{genreId}/products")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public IActionResult GetProductsOfAGenre(int genreId)
+        public IActionResult GetProductsOfAGenre(string languageCode, int genreId)
         {
             if (!_genreRepository.GenreExists(genreId))
                 return NotFound();
@@ -133,10 +136,13 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
+                var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+
                 productsDto.Add(new ProductDetailsDto
                 {
                     Id = product.Id,
-                    Title = product.Title,
+                    Title = productTranslation.Title,
+                    Summary = productTranslation.Summary,
                     ReleaseDate = product.ReleaseDate,
                     Duration = product.Duration,
                     Stock = product.Stock,

@@ -16,13 +16,15 @@ namespace Primeflix.Controllers
         private ICelebrityRepository _celebrityRepository;
         private IFormatRepository _formatRepository;
         private IGenreTranslationRepository _genreTranslationRepository;
+        private IProductTranslationRepository _productTranslationRepository;
 
         public ProductsController(
             IProductRepository productRepository,
             IGenreRepository genreRepository,
             ICelebrityRepository celebrityRepository,
             IFormatRepository formatRepository,
-            IGenreTranslationRepository genreTranslationRepository
+            IGenreTranslationRepository genreTranslationRepository,
+            IProductTranslationRepository productTranslationRepository
             )
         {
             _productRepository = productRepository;
@@ -30,6 +32,7 @@ namespace Primeflix.Controllers
             _celebrityRepository = celebrityRepository;
             _formatRepository = formatRepository;
             _genreTranslationRepository = genreTranslationRepository;
+            _productTranslationRepository = productTranslationRepository;
         }
 
         //api/products/languageCode/params
@@ -89,18 +92,40 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
-                productsDto.Add(new ProductDto
+                var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+
+                if (productTranslation != null)
                 {
-                    Id = product.Id,
-                    Title = product.Title,
-                    ReleaseDate = product.ReleaseDate,
-                    Stock = product.Stock,
-                    Rating = product.Rating,
-                    Format = formatDto,
-                    PictureUrl = product.PictureUrl,
-                    Price = product.Price,
-                    Genres = genresDto
-                });
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Title = productTranslation.Title,
+                        ReleaseDate = product.ReleaseDate,
+                        Stock = product.Stock,
+                        Rating = product.Rating,
+                        Format = formatDto,
+                        PictureUrl = product.PictureUrl,
+                        Price = product.Price,
+                        Genres = genresDto
+                    });
+                }
+
+                else
+                {
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Title = product.Title,
+                        ReleaseDate = product.ReleaseDate,
+                        Stock = product.Stock,
+                        Rating = product.Rating,
+                        Format = formatDto,
+                        PictureUrl = product.PictureUrl,
+                        Price = product.Price,
+                        Genres = genresDto
+                    });
+                }
+
             }
             return Ok(productsDto);
         }
@@ -166,10 +191,13 @@ namespace Primeflix.Controllers
                 Name = oFormat.Name
             };
 
+            var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+
             var productDto = new ProductDetailsDto()
             {
                 Id = product.Id,
-                Title = product.Title,
+                Title = productTranslation.Title,
+                Summary = productTranslation.Summary,
                 ReleaseDate = product.ReleaseDate,
                 Duration = product.Duration,
                 Stock = product.Stock,

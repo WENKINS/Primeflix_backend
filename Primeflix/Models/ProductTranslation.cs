@@ -19,5 +19,9 @@ namespace Primeflix.Models
         public int ProductId { get; set; }
 
         public Product Product { get; set; }
+
+        public string Title { get; set; }
+
+        public string Summary { get; set; }
     }
 }

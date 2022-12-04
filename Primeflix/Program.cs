@@ -21,6 +21,7 @@ builder.Services.AddScoped<ICelebrityRepository, CelebrityRepository>();
 builder.Services.AddScoped<IFormatRepository, FormatRepository>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 builder.Services.AddScoped<IGenreTranslationRepository, GenreTranslationRepository>();
+builder.Services.AddScoped<IProductTranslationRepository, ProductTranslationRepository>();
 builder.Services.AddEntityFrameworkMySQL().AddDbContext<DatabaseContext>(options =>
 {
     options.UseMySQL(builder.Configuration.GetConnectionString("DBConnection"));
