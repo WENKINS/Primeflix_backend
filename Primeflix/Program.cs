@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using MySql.EntityFrameworkCore.Extensions;
 using Primeflix.Data;
 using Primeflix.Services;
@@ -42,14 +43,17 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.UseStaticFiles();
+
+app.UseFileServer(new FileServerOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "Pictures")),
+    RequestPath = "/Pictures",
+    EnableDefaultFiles = true
+});
+
 app.Run();
 
-app.UseMvc();
 
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllerRoute(
-        name: "default",
-        pattern: "{controller}/{action}/{id?}"
-        );
-});
+
