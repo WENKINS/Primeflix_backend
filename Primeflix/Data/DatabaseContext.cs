@@ -14,29 +14,11 @@ namespace Primeflix.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Actor>().HasKey(a => new
-            {
-                a.CelebrityId,
-                a.ProductId
-            });
-
-            modelBuilder.Entity<Director>().HasKey(d => new
-            {
-                d.CelebrityId,
-                d.ProductId
-            });
-
-            modelBuilder.Entity<ProductGenre>().HasKey(pg => new
-            {
-                pg.ProductId,
-                pg.GenreId
-            });
-
-            //modelBuilder.Entity<Product>().HasKey(p => new { p.FormatId });
-
             modelBuilder.Entity<Actor>().HasKey(a => new { a.CelebrityId, a.ProductId });
             modelBuilder.Entity<Director>().HasKey(d => new { d.CelebrityId, d.ProductId });
             modelBuilder.Entity<ProductGenre>().HasKey(pg => new { pg.ProductId, pg.GenreId });
+            modelBuilder.Entity<ProductTranslation>().HasKey(pt => new { pt.ProductId, pt.LanguageId});
+            modelBuilder.Entity<GenreTranslation>().HasKey(gt => new { gt.GenreId, gt.LanguageId });
 
             modelBuilder.Entity<Actor>().HasOne(p => p.Product).WithMany(a => a.ActorsMovies).HasForeignKey(p => p.ProductId);
             modelBuilder.Entity<Actor>().HasOne(c => c.Celebrity).WithMany(a => a.ActorsMovies).HasForeignKey(c => c.CelebrityId);
@@ -47,7 +29,11 @@ namespace Primeflix.Data
             modelBuilder.Entity<ProductGenre>().HasOne(p => p.Product).WithMany(pg => pg.ProductGenre).HasForeignKey(p => p.ProductId);
             modelBuilder.Entity<ProductGenre>().HasOne(g => g.Genre).WithMany(pg => pg.ProductGenre).HasForeignKey(g => g.GenreId);
 
-            //modelBuilder.Entity<Product>().HasOne(f => f.Format).WithMany(p => p.Products).HasForeignKey(f => f.FormatId);
+            modelBuilder.Entity<ProductTranslation>().HasOne(p => p.Product).WithMany(pt => pt.ProductsTranslations).HasForeignKey(p => p.ProductId);
+            modelBuilder.Entity<ProductTranslation>().HasOne(l => l.Language).WithMany(pt => pt.ProductsTranslations).HasForeignKey(g => g.LanguageId);
+
+            modelBuilder.Entity<GenreTranslation>().HasOne(l => l.Language).WithMany(gt => gt.GenresTranslations).HasForeignKey(l => l.LanguageId);
+            modelBuilder.Entity<GenreTranslation>().HasOne(g => g.Genre).WithMany(gt => gt.GenresTranslations).HasForeignKey(g => g.GenreId);
 
             base.OnModelCreating(modelBuilder);
         }
@@ -59,6 +45,8 @@ namespace Primeflix.Data
         public virtual DbSet<Genre> Genres { get; set; }
         public virtual DbSet<ProductGenre> ProductsGenres { get; set; }
         public virtual DbSet<Format> Formats { get; set; }
-
+        public virtual DbSet<Language> Languages { get; set; }
+        public virtual DbSet<ProductTranslation> ProductsTranslations { get; set; }
+        public virtual DbSet<GenreTranslation> GenresTranslations { get; set; }
     }
 }

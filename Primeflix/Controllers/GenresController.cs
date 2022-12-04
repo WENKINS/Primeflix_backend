@@ -21,13 +21,13 @@ namespace Primeflix.Controllers
             _formatRepository = formatRepository;
         }
 
-        //api/genres
-        [HttpGet]
+        //api/genres/languageId
+        [HttpGet("{languageId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public IActionResult GetGenres()
+        public IActionResult GetGenres(int languageId)
         {
-            var genres = _genreRepository.GetGenres().ToList();
+            var genres = _genreRepository.GetGenres(languageId).ToList();
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -44,12 +44,12 @@ namespace Primeflix.Controllers
             return Ok(genresDto);
         }
 
-        //api/genres/genreId
-        [HttpGet("{genreId}", Name = "GetGenre")]
+        //api/genres/languageId/genreId
+        [HttpGet("{languageId}/{genreId}", Name = "GetGenre")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public IActionResult GetGenre(int genreId)
+        public IActionResult GetGenre(int languageId, int genreId)
         {
             if (!_genreRepository.GenreExists(genreId))
                 return NotFound();
@@ -130,7 +130,7 @@ namespace Primeflix.Controllers
                     Duration = product.Duration,
                     Stock = product.Stock,
                     Rating = product.Rating,
-                    //Format = product.Format,//formatDto,
+                    Format = formatDto,
                     PictureUrl = product.PictureUrl,
                     Price = product.Price
                 });
@@ -150,7 +150,7 @@ namespace Primeflix.Controllers
             if (genreToCreate == null)
                 return BadRequest(ModelState);
 
-            var genre = _genreRepository.GetGenres()
+            var genre = _genreRepository.GetGenres(1)
                 .Where(g => g.Name.Trim().ToUpper() == genreToCreate.Name.Trim().ToUpper())
                 .FirstOrDefault();
 

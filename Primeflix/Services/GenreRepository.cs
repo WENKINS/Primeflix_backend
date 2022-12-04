@@ -1,4 +1,5 @@
-﻿using Primeflix.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using Primeflix.Data;
 using Primeflix.Models;
 
 namespace Primeflix.Services
@@ -12,21 +13,17 @@ namespace Primeflix.Services
             _databaseContext = databaseContext;
         }
 
-        public bool CreateGenre(Genre genre)
-        {
-            _databaseContext.Add(genre);
-            return Save();
-        }
-
-        public bool DeleteGenre(Genre genre)
-        {
-            _databaseContext.Remove(genre);
-            return Save();
-        }
-
         public bool GenreExists(int genreId)
         {
             return _databaseContext.Genres.Any(g => g.Id == genreId);
+        }
+
+        public ICollection<Genre> GetGenres(int languageId)
+        {
+            return _databaseContext.GenresTranslations
+                .Where(gt => gt.LanguageId == languageId)
+                .Select(g => g.Genre)
+                .ToList();
         }
 
         public Genre GetGenre(int genreId)
@@ -39,9 +36,10 @@ namespace Primeflix.Services
             return _databaseContext.Genres.Where(g => g.Name == genreName).FirstOrDefault();
         }
 
-        public ICollection<Genre> GetGenres()
+        public bool IsDuplicate(int genreId, string genreName)
         {
-            return _databaseContext.Genres.OrderBy(g => g.Name).ToList();
+            var genre = _databaseContext.Genres.Where(g => g.Name.Trim().ToUpper() == genreName.Trim().ToUpper() && g.Id != genreId).FirstOrDefault();
+            return genre == null ? false : true;
         }
 
         public ICollection<Genre> GetGenresOfAProduct(int productId)
@@ -54,21 +52,27 @@ namespace Primeflix.Services
             return _databaseContext.ProductsGenres.Where(g => g.GenreId == genreId).Select(p => p.Product).ToList();
         }
 
-        public bool IsDuplicate(int genreId, string genreName)
+        public bool CreateGenre(Genre genre)
         {
-            var genre = _databaseContext.Genres.Where(g => g.Name.Trim().ToUpper() == genreName.Trim().ToUpper() && g.Id != genreId).FirstOrDefault();
-            return genre == null ? false : true;
-        }
-
-        public bool Save()
-        {
-            return _databaseContext.SaveChanges() < 0 ? false : true;
+            _databaseContext.Add(genre);
+            return Save();
         }
 
         public bool UpdateGenre(Genre genre)
         {
             _databaseContext.Update(genre);
             return Save();
+        }
+
+        public bool DeleteGenre(Genre genre)
+        {
+            _databaseContext.Remove(genre);
+            return Save();
+        }
+
+        public bool Save()
+        {
+            return _databaseContext.SaveChanges() < 0 ? false : true;
         }
     }
 }
