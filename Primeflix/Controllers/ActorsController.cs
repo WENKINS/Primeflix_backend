@@ -20,13 +20,21 @@ namespace Primeflix.Controllers
         private IProductRepository _productRepository;
         private IGenreRepository _genreRepository;
         private IFormatRepository _formatRepository;
+        private IGenreTranslationRepository _genreTranslationRepository;
 
-        public ActorsController(ICelebrityRepository celebrityRepository, IProductRepository productRepository, IGenreRepository genreRepository, IFormatRepository formatRepository)
+        public ActorsController(
+            ICelebrityRepository celebrityRepository, 
+            IProductRepository productRepository, 
+            IGenreRepository genreRepository, 
+            IFormatRepository formatRepository,
+            IGenreTranslationRepository genreTranslationRepository
+            )
         {
             _celebrityRepository = celebrityRepository;
             _productRepository = productRepository;
             _genreRepository = genreRepository;
             _formatRepository = formatRepository;
+            _genreTranslationRepository = genreTranslationRepository;
         }
 
         //api/actors
@@ -107,12 +115,12 @@ namespace Primeflix.Controllers
             return Ok(celebritiesDto);
         }
 
-        //api/actors/celebrityId/products
-        [HttpGet("{celebrityId}/products")]
+        //api/actors/celebrityId/products/languageCode
+        [HttpGet("{languageCode}/{celebrityId}/products")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public IActionResult GetProductsOfAnActor(int celebrityId)
+        public IActionResult GetProductsOfAnActor(int celebrityId, string languageCode)
         {
             if (!_celebrityRepository.ActorExists(celebrityId))
                 return NotFound();
@@ -157,10 +165,11 @@ namespace Primeflix.Controllers
 
                 foreach (var genre in genres)
                 {
+                    var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                     genresDto.Add(new GenreDto
                     {
                         Id = genre.Id,
-                        Name = genre.Name
+                        Name = genreTranslation.Translation
                     });
                 }
 

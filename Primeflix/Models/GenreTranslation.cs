@@ -19,5 +19,8 @@ namespace Primeflix.Models
         public int LanguageId { get; set; }
 
         public Language Language { get; set; }
+
+        [Column("genre_translation")]
+        public string Translation { get; set; }
     }
 }

@@ -5,7 +5,7 @@ namespace Primeflix.Services
     public interface IGenreTranslationRepository
     {
         ICollection<GenreTranslation> GetGenresTranslations();
-        GenreTranslation GetGenreTranslation(int genreId, int languageId);
+        GenreTranslation GetGenreTranslation(int genreId, string languageCode);
         ICollection<GenreTranslation> GetTranslationsOfAGenre(int genreId);
         ICollection<GenreTranslation> GetGenresOfALanguage(int languageId);
         bool GenreTranslationExists(int genreId, int languageId);

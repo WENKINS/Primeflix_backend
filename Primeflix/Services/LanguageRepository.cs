@@ -27,9 +27,9 @@ namespace Primeflix.Services
             return _databaseContext.Languages.Where(l => l.Id == languageId).FirstOrDefault();
         }
 
-        public Language GetLanguage(string languageName)
+        public Language GetLanguage(string languageCode)
         {
-            return _databaseContext.Languages.Where(l => l.Name == languageName).FirstOrDefault();
+            return _databaseContext.Languages.Where(l => l.Code == languageCode).FirstOrDefault();
         }
 
         public bool IsDuplicate(int languageId, string languageName)

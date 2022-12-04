@@ -6,7 +6,7 @@ namespace Primeflix.Services
     {
         ICollection<Language> GetLanguages();
         Language GetLanguage(int languageId);
-        Language GetLanguage(string languageName);
+        Language GetLanguage(string languageCode);
         bool LanguageExists(int languageId);
         bool IsDuplicate(int languageId, string languageName);
         bool CreateLanguage(Language language);

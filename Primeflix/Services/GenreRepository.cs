@@ -18,10 +18,10 @@ namespace Primeflix.Services
             return _databaseContext.Genres.Any(g => g.Id == genreId);
         }
 
-        public ICollection<Genre> GetGenres(int languageId)
+        public ICollection<Genre> GetGenres(string languageCode)
         {
             return _databaseContext.GenresTranslations
-                .Where(gt => gt.LanguageId == languageId)
+                .Where(gt => gt.Language.Code == languageCode)
                 .Select(g => g.Genre)
                 .ToList();
         }

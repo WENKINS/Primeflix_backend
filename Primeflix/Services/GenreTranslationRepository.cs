@@ -22,9 +22,9 @@ namespace Primeflix.Services
             return _databaseContext.GenresTranslations.ToList();
         }
 
-        public GenreTranslation GetGenreTranslation(int genreId, int languageId)
+        public GenreTranslation GetGenreTranslation(int genreId, string languageCode)
         {
-            return _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.LanguageId == languageId).FirstOrDefault();
+            return _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.Language.Code == languageCode).FirstOrDefault();
         }
 
         public bool IsDuplicate(int genreId, int languageId)
@@ -65,6 +65,5 @@ namespace Primeflix.Services
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
-
     }
 }
