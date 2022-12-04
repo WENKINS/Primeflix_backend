@@ -59,7 +59,7 @@ namespace Primeflix.Services
             return Save();
         }
 
-        public ICollection<Product> FilterResults(bool recentlyAdded, string format, List<int> genresId)
+        public ICollection<Product> FilterResults(bool recentlyAdded, int formatId, List<int> genresId)
         {
             var products = new List<Product>();
 
@@ -67,7 +67,7 @@ namespace Primeflix.Services
             {
                 foreach (var genreId in genresId)
                 {
-                    if (format == "All")
+                    if (formatId == 0)
                     {
                         if (recentlyAdded)
                         {
@@ -75,7 +75,8 @@ namespace Primeflix.Services
                                 .Where(g => g.GenreId == genreId)
                                 .Select(p => p.Product)
                                 .OrderBy(p => p.Title)
-                                .Take(3)
+                                .OrderByDescending(p => p.CreatedAt)
+                                .Take(20)
                                 .ToList());
                         }
 
@@ -89,7 +90,7 @@ namespace Primeflix.Services
                         }
                     }
 
-                    if (format == "film")
+                    if (formatId == 1)
                     {
                         if (recentlyAdded)
                         {
@@ -97,8 +98,9 @@ namespace Primeflix.Services
                                 .Where(g => g.GenreId == genreId)
                                 .Select(p => p.Product)
                                 .OrderBy(p => p.Title)
-                                .Where(p => p.Format == format)
-                                .Take(3)
+                                .Where(p => p.FormatId == formatId)
+                                .OrderByDescending(p => p.CreatedAt)
+                                .Take(20)
                                 .ToList());
                         }
 
@@ -108,12 +110,12 @@ namespace Primeflix.Services
                                 .Where(g => g.GenreId == genreId)
                                 .Select(p => p.Product)
                                 .OrderBy(p => p.Title)
-                                .Where(p => p.Format == format)
+                                .Where(p => p.FormatId == formatId)
                                 .ToList());
                         }
                     }
-
-                    if (format == "serie")
+                    
+                    if (formatId == 2)
                     {
                         if (recentlyAdded)
                         {
@@ -121,8 +123,9 @@ namespace Primeflix.Services
                                 .Where(g => g.GenreId == genreId)
                                 .Select(p => p.Product)
                                 .OrderBy(p => p.Title)
-                                .Where(p => p.Format == format)
-                                .Take(3)
+                                .Where(p => p.FormatId == formatId)
+                                .OrderByDescending(p => p.CreatedAt)
+                                .Take(20)
                                 .ToList());
                         }
 
@@ -132,7 +135,7 @@ namespace Primeflix.Services
                                 .Where(g => g.GenreId == genreId)
                                 .Select(p => p.Product)
                                 .OrderBy(p => p.Title)
-                                .Where(p => p.Format == format)
+                                .Where(p => p.FormatId == formatId)
                                 .ToList());
                         }
                     }
@@ -141,70 +144,61 @@ namespace Primeflix.Services
 
             else
             {
-                if (format == "All")
+                if (formatId == 0)
                 {
                     if (recentlyAdded)
                     {
-                        products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                            .Include(p => p.DirectorsMovies)
-                            .Include(p => p.ActorsMovies)
+                        products = _databaseContext.Products.OrderBy(p => p.Title)
                             .Include(p => p.ProductGenre)
-                            .Take(3)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .Take(20)
                             .ToList();
                         return products;
                     }
 
-                    products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                        .Include(p => p.DirectorsMovies)
-                        .Include(p => p.ActorsMovies)
+                    products = _databaseContext.Products.OrderBy(p => p.Title)
                         .Include(p => p.ProductGenre)
+                        .Include(p => p.Format)
+                        .Distinct()
+                        .ToList();
+                }
+
+                if (formatId == 1)
+                {
+                    if (recentlyAdded)
+                    {
+                        products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                            .Include(p => p.ProductGenre)
+                            .Where(p => p.FormatId == formatId)
+                            .OrderByDescending(p => p.CreatedAt)
+                            .Take(20)
+                            .ToList();
+
+                        return products;
+                    }
+
+                    products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
+                        .Include(p => p.ProductGenre)
+                        .Where(p => p.FormatId == formatId)
                         .ToList();
                     return products;
                 }
 
-                if (format == "film")
+                if (formatId == 2)
                 {
                     if (recentlyAdded)
                     {
                         products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                            .Include(p => p.DirectorsMovies)
-                            .Include(p => p.ActorsMovies)
                             .Include(p => p.ProductGenre)
-                            .Where(p => p.Format == format)
-                            .Take(3)
-                            .ToList();
-
-                        return products;
-                    }
-
-                    products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                        .Include(p => p.DirectorsMovies)
-                        .Include(p => p.ActorsMovies)
-                        .Include(p => p.ProductGenre)
-                        .Where(p => p.Format == format)
-                        .ToList();
-                    return products;
-                }
-
-                if (format == "serie")
-                {
-                    if (recentlyAdded)
-                    {
-                        products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                            .Include(p => p.DirectorsMovies)
-                            .Include(p => p.ActorsMovies)
-                            .Include(p => p.ProductGenre)
-                            .Where(p => p.Format == format)
+                            .Where(p => p.FormatId == formatId)
                             .Take(3)
                             .ToList();
                         return products;
                     }
 
                     products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                        .Include(p => p.DirectorsMovies)
-                        .Include(p => p.ActorsMovies)
                         .Include(p => p.ProductGenre)
-                        .Where(p => p.Format == format)
+                        .Where(p => p.FormatId == formatId)
                         .ToList();
                     return products;
                 }

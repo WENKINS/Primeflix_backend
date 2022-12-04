@@ -19,12 +19,14 @@ namespace Primeflix.Controllers
         private ICelebrityRepository _celebrityRepository;
         private IProductRepository _productRepository;
         private IGenreRepository _genreRepository;
+        private IFormatRepository _formatRepository;
 
-        public ActorsController(ICelebrityRepository celebrityRepository, IProductRepository productRepository, IGenreRepository genreRepository)
+        public ActorsController(ICelebrityRepository celebrityRepository, IProductRepository productRepository, IGenreRepository genreRepository, IFormatRepository formatRepository)
         {
             _celebrityRepository = celebrityRepository;
             _productRepository = productRepository;
             _genreRepository = genreRepository;
+            _formatRepository = formatRepository;
         }
 
         //api/actors
@@ -162,6 +164,13 @@ namespace Primeflix.Controllers
                     });
                 }
 
+                var oFormat = _formatRepository.GetFormatOfAProduct(product.Id);
+                var formatDto = new FormatDto()
+                {
+                    Id = oFormat.Id,
+                    Name = oFormat.Name
+                };
+
                 productsDto.Add(new ProductDetailsDto
                 {
                     Id = product.Id,
@@ -170,7 +179,7 @@ namespace Primeflix.Controllers
                     Duration = product.Duration,
                     Stock = product.Stock,
                     Rating = product.Rating,
-                    Format = product.Format,
+                    Format = formatDto,
                     PictureUrl = product.PictureUrl,
                     Price = product.Price,
                     Directors = directorsDto,

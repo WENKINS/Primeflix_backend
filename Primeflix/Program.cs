@@ -18,6 +18,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(options => options.Serialize
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICelebrityRepository, CelebrityRepository>();
+builder.Services.AddScoped<IFormatRepository, FormatRepository>();
 builder.Services.AddEntityFrameworkMySQL().AddDbContext<DatabaseContext>(options =>
 {
     options.UseMySQL(builder.Configuration.GetConnectionString("DBConnection"));
