@@ -14,7 +14,7 @@ namespace Primeflix.Models
         [Column("last_name")]
         public string LastName { get; set; }
         // Relationships
-        public virtual ICollection<Actor> ActorsMovies { get; set; }
-        public virtual ICollection<Director> DirectorsMovies { get; set; }
+        public virtual ICollection<Actor>? ActorsMovies { get; set; }
+        public virtual ICollection<Director>? DirectorsMovies { get; set; }
     }
 }

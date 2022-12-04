@@ -9,21 +9,49 @@ namespace Primeflix.Models
         [Key]
         [Column("product_id")]
         public int Id { get; set; }
-        [Column("original_title")]
-        public string Title { get; set; }
-        [Column("released_date")]
-        public DateTime ReleaseDate { get; set; }
-        public int Duration { get; set; }
-        public int Stock { get; set; }
-        public int Rating { get; set; }
-        public string Format { get; set; }
-        [Column("picture_url")]
-        public string PictureUrl { get; set; }
-        public double Price { get; set; }
-        // Relationships
-        public virtual ICollection<Actor> ActorsMovies { get; set; }
-        public virtual ICollection<Director> DirectorsMovies { get; set; }
-        public virtual ICollection<ProductGenre> ProductGenre { get; set; }
 
+        [Column("original_title")]
+        [Required]
+        public string Title { get; set; }
+
+        [Column("released_date")]
+        [Required]
+        public DateTime ReleaseDate { get; set; }
+
+        [Required]
+        public int Duration { get; set; }
+
+        [Required]
+        public int Stock { get; set; }
+
+        [Required]
+        public int Rating { get; set; }
+
+        [Column("picture_url")]
+        [Required]
+        public string PictureUrl { get; set; }
+
+        [Required]
+        public double Price { get; set; }
+
+        [Column("created_at")]
+        public DateTime? CreatedAt { get; set; }
+
+        [Column("created_by")]
+        public string? CreatedBy { get; set; }
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
+
+        [Column("updated_by")]
+        public string? UpdatedBy { get; set; }
+
+        // Relationships
+        public virtual ICollection<Actor>? ActorsMovies { get; set; }
+        public virtual ICollection<Director>? DirectorsMovies { get; set; }
+        public virtual ICollection<ProductGenre>? ProductGenre { get; set; }
+        [Column("format_id")]
+        public int FormatId { get; set; }
+        public Format Format { get; set; }
     }   
 }

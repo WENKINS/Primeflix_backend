@@ -32,6 +32,8 @@ namespace Primeflix.Data
                 pg.GenreId
             });
 
+            //modelBuilder.Entity<Product>().HasKey(p => new { p.FormatId });
+
             modelBuilder.Entity<Actor>().HasKey(a => new { a.CelebrityId, a.ProductId });
             modelBuilder.Entity<Director>().HasKey(d => new { d.CelebrityId, d.ProductId });
             modelBuilder.Entity<ProductGenre>().HasKey(pg => new { pg.ProductId, pg.GenreId });
@@ -45,6 +47,8 @@ namespace Primeflix.Data
             modelBuilder.Entity<ProductGenre>().HasOne(p => p.Product).WithMany(pg => pg.ProductGenre).HasForeignKey(p => p.ProductId);
             modelBuilder.Entity<ProductGenre>().HasOne(g => g.Genre).WithMany(pg => pg.ProductGenre).HasForeignKey(g => g.GenreId);
 
+            //modelBuilder.Entity<Product>().HasOne(f => f.Format).WithMany(p => p.Products).HasForeignKey(f => f.FormatId);
+
             base.OnModelCreating(modelBuilder);
         }
 
@@ -54,6 +58,7 @@ namespace Primeflix.Data
         public virtual DbSet<Celebrity> Celebrities { get; set;}
         public virtual DbSet<Genre> Genres { get; set; }
         public virtual DbSet<ProductGenre> ProductsGenres { get; set; }
+        public virtual DbSet<Format> Formats { get; set; }
 
     }
 }

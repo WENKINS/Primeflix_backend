@@ -12,6 +12,18 @@ namespace Primeflix.Services
             _databaseContext = databaseContext;
         }
 
+        public bool CreateGenre(Genre genre)
+        {
+            _databaseContext.Add(genre);
+            return Save();
+        }
+
+        public bool DeleteGenre(Genre genre)
+        {
+            _databaseContext.Remove(genre);
+            return Save();
+        }
+
         public bool GenreExists(int genreId)
         {
             return _databaseContext.Genres.Any(g => g.Id == genreId);
@@ -20,6 +32,11 @@ namespace Primeflix.Services
         public Genre GetGenre(int genreId)
         {
             return _databaseContext.Genres.Where(g => g.Id == genreId).FirstOrDefault();
+        }
+
+        public Genre GetGenre(string genreName)
+        {
+            return _databaseContext.Genres.Where(g => g.Name == genreName).FirstOrDefault();
         }
 
         public ICollection<Genre> GetGenres()
@@ -41,6 +58,17 @@ namespace Primeflix.Services
         {
             var genre = _databaseContext.Genres.Where(g => g.Name.Trim().ToUpper() == genreName.Trim().ToUpper() && g.Id != genreId).FirstOrDefault();
             return genre == null ? false : true;
+        }
+
+        public bool Save()
+        {
+            return _databaseContext.SaveChanges() < 0 ? false : true;
+        }
+
+        public bool UpdateGenre(Genre genre)
+        {
+            _databaseContext.Update(genre);
+            return Save();
         }
     }
 }
