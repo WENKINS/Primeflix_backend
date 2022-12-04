@@ -4,7 +4,7 @@ namespace Primeflix.Services
 {
     public interface IGenreRepository
     {
-        ICollection<Genre> GetGenres();
+        ICollection<Genre> GetGenres(string languageCode);
         Genre GetGenre(int genreId);
         Genre GetGenre(string genreName);
         ICollection<Genre> GetGenresOfAProduct(int productId);

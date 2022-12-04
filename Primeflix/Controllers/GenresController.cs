@@ -13,21 +13,31 @@ namespace Primeflix.Controllers
         private IGenreRepository _genreRepository;
         private IProductRepository _productRepository;
         private IFormatRepository _formatRepository;
+        private IGenreTranslationRepository _genreTranslationRepository;
+        private IProductTranslationRepository _productTranslationRepository;
 
-        public GenresController(IGenreRepository genreRepository, IProductRepository productRepository, IFormatRepository formatRepository)
+        public GenresController(
+            IGenreRepository genreRepository, 
+            IProductRepository productRepository, 
+            IFormatRepository formatRepository,
+            IGenreTranslationRepository genreTranslationRepository,
+            IProductTranslationRepository productTranslationRepository
+            )
         {
             _genreRepository = genreRepository;
             _productRepository = productRepository;
             _formatRepository = formatRepository;
+            _genreTranslationRepository = genreTranslationRepository;
+            _productTranslationRepository = productTranslationRepository;
         }
 
-        //api/genres
-        [HttpGet]
+        //api/genres/languageCode
+        [HttpGet("{languageCode}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public IActionResult GetGenres()
+        public IActionResult GetGenres(string languageCode)
         {
-            var genres = _genreRepository.GetGenres().ToList();
+            var genres = _genreRepository.GetGenres(languageCode).ToList();
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -35,21 +45,22 @@ namespace Primeflix.Controllers
             var genresDto = new List<GenreDto>();
             foreach (var genre in genres)
             {
+                var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                 genresDto.Add(new GenreDto
                 {
                     Id = genre.Id,
-                    Name = genre.Name
+                    Name = genreTranslation.Translation
                 });
             }
             return Ok(genresDto);
         }
 
-        //api/genres/genreId
-        [HttpGet("{genreId}", Name = "GetGenre")]
+        //api/genres/languageCode/genreId
+        [HttpGet("{languageCode}/{genreId}", Name = "GetGenre")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public IActionResult GetGenre(int genreId)
+        public IActionResult GetGenre(string languageCode, int genreId)
         {
             if (!_genreRepository.GenreExists(genreId))
                 return NotFound();
@@ -59,21 +70,23 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+
             var genreDto = new GenreDto()
             {
                 Id = genre.Id,
-                Name = genre.Name
+                Name = genreTranslation.Translation
             };
 
             return Ok(genreDto);
         }
 
         //api/genres/products/productId
-        [HttpGet("products/{productId}")]
+        [HttpGet("products/{languageCode}/{productId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public IActionResult GetGenresOfAProduct(int productId)
+        public IActionResult GetGenresOfAProduct(int productId, string languageCode)
         {
             if (!_productRepository.ProductExists(productId))
                 return NotFound();
@@ -83,10 +96,11 @@ namespace Primeflix.Controllers
             var genresDto = new List<GenreDto>();
             foreach (var genre in genres)
             {
+                var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                 genresDto.Add(new GenreDto()
                 {
                     Id = genre.Id,
-                    Name = genre.Name
+                    Name = genreTranslation.Translation
                 });
             }
 
@@ -97,11 +111,11 @@ namespace Primeflix.Controllers
         }
 
         //api/genres/genresId/products
-        [HttpGet("{genreId}/products")]
+        [HttpGet("{languageCode}/{genreId}/products")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public IActionResult GetProductsOfAGenre(int genreId)
+        public IActionResult GetProductsOfAGenre(string languageCode, int genreId)
         {
             if (!_genreRepository.GenreExists(genreId))
                 return NotFound();
@@ -122,15 +136,18 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
+                var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+
                 productsDto.Add(new ProductDetailsDto
                 {
                     Id = product.Id,
-                    Title = product.Title,
+                    Title = productTranslation.Title,
+                    Summary = productTranslation.Summary,
                     ReleaseDate = product.ReleaseDate,
                     Duration = product.Duration,
                     Stock = product.Stock,
                     Rating = product.Rating,
-                    //Format = product.Format,//formatDto,
+                    Format = formatDto,
                     PictureUrl = product.PictureUrl,
                     Price = product.Price
                 });
@@ -150,7 +167,7 @@ namespace Primeflix.Controllers
             if (genreToCreate == null)
                 return BadRequest(ModelState);
 
-            var genre = _genreRepository.GetGenres()
+            var genre = _genreRepository.GetGenres("fr")
                 .Where(g => g.Name.Trim().ToUpper() == genreToCreate.Name.Trim().ToUpper())
                 .FirstOrDefault();
 

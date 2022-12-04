@@ -47,11 +47,18 @@ namespace Primeflix.Models
         public string? UpdatedBy { get; set; }
 
         // Relationships
-        public virtual ICollection<Actor>? ActorsMovies { get; set; }
-        public virtual ICollection<Director>? DirectorsMovies { get; set; }
-        public virtual ICollection<ProductGenre>? ProductGenre { get; set; }
+
         [Column("format_id")]
         public int FormatId { get; set; }
+
         public Format Format { get; set; }
+
+        public virtual ICollection<Actor>? ActorsMovies { get; set; }
+
+        public virtual ICollection<Director>? DirectorsMovies { get; set; }
+
+        public virtual ICollection<ProductGenre>? ProductGenre { get; set; }
+
+        public virtual ICollection<ProductTranslation>? ProductsTranslations { get; set; }
     }   
 }

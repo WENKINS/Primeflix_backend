@@ -12,13 +12,24 @@ namespace Primeflix.Controllers
         private IProductRepository _productRepository;
         private IGenreRepository _genreRepository;
         private IFormatRepository _formatRepository;
+        private IGenreTranslationRepository _genreTranslationRepository;
+        private IProductTranslationRepository _productTranslationRepository;
 
-        public DirectorsController(ICelebrityRepository celebrityRepository, IProductRepository productRepository, IGenreRepository genreRepository, IFormatRepository formatRepository)
+        public DirectorsController(
+            ICelebrityRepository celebrityRepository, 
+            IProductRepository productRepository, 
+            IGenreRepository genreRepository, 
+            IFormatRepository formatRepository,
+            IGenreTranslationRepository genreTranslationRepository,
+            IProductTranslationRepository productTranslationRepository
+            )
         {
             _celebrityRepository = celebrityRepository;
             _productRepository = productRepository;
             _genreRepository = genreRepository;
             _formatRepository = formatRepository;
+            _genreTranslationRepository = genreTranslationRepository;
+            _productTranslationRepository = productTranslationRepository;
         }
 
         //api/directors
@@ -102,12 +113,12 @@ namespace Primeflix.Controllers
             return Ok(celebritiesDto);
         }
 
-        //api/directors/celebrityId/products
-        [HttpGet("{celebrityId}/products")]
+        //api/directors/celebrityId/products/languageCode
+        [HttpGet("{languageCode}/{celebrityId}/products")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public IActionResult GetProductsOfADirector(int celebrityId)
+        public IActionResult GetProductsOfADirector(int celebrityId, string languageCode)
         {
             if (!_celebrityRepository.DirectorExists(celebrityId))
                 return NotFound();
@@ -152,10 +163,11 @@ namespace Primeflix.Controllers
 
                 foreach (var genre in genres)
                 {
+                    var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                     genresDto.Add(new GenreDto
                     {
                         Id = genre.Id,
-                        Name = genre.Name
+                        Name = genreTranslation.Translation
                     });
                 }
                 
@@ -166,10 +178,13 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
+                var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+
                 productsDto.Add(new ProductDetailsDto
                 {
                     Id = product.Id,
-                    Title = product.Title,
+                    Title = productTranslation.Title,
+                    Summary = productTranslation.Summary,
                     ReleaseDate = product.ReleaseDate,
                     Duration = product.Duration,
                     Stock = product.Stock,
