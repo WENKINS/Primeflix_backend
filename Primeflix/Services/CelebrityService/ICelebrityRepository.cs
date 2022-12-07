@@ -4,27 +4,27 @@ namespace Primeflix.Services.CelebrityService
 {
     public interface ICelebrityRepository
     {
-        bool CelebrityExists(int celebrityId);
-        bool IsDuplicate(int celebrityId, string firstName, string lastName);
-        ICollection<Celebrity> GetCelebrities();
-        Celebrity GetCelebrity(int celebrityId);
-        bool CreateCelebrity(Celebrity celebrity);
-        bool UpdateCelebrity(Celebrity celebrity);
-        bool DeleteCelebrity(Celebrity celebrity);
-        bool Save();
+        Task<bool> CelebrityExists(int celebrityId);
+        Task<bool> IsDuplicate(int celebrityId, string firstName, string lastName);
+        Task<ICollection<Celebrity>> GetCelebrities();
+        Task<Celebrity> GetCelebrity(int celebrityId);
+        Task<bool> CreateCelebrity(Celebrity celebrity);
+        Task<bool> UpdateCelebrity(Celebrity celebrity);
+        Task<bool> DeleteCelebrity(Celebrity celebrity);
+        Task<bool> Save();
 
         // Directors
-        bool DirectorExists(int celebrityId);
-        ICollection<Celebrity> GetDirectors();
-        Celebrity GetDirector(int celebrityId);
-        ICollection<Celebrity> GetDirectorsOfAProduct(int productId);
-        ICollection<Product> GetProductsOfADirector(int celebrityId);
+        Task<bool> DirectorExists(int celebrityId);
+        Task<ICollection<Celebrity>> GetDirectors();
+        Task<Celebrity> GetDirector(int celebrityId);
+        Task<ICollection<Celebrity>> GetDirectorsOfAProduct(int productId);
+        Task<ICollection<Product>> GetProductsOfADirector(int celebrityId);
 
         //Actors
-        bool ActorExists(int celebrityId);
-        ICollection<Celebrity> GetActors();
-        Celebrity GetActor(int celebrityId);
-        ICollection<Celebrity> GetActorsOfAProduct(int productId);
-        ICollection<Product> GetProductsOfAnActor(int celebrityId);
+        Task<bool> ActorExists(int celebrityId);
+        Task<ICollection<Celebrity>> GetActors();
+        Task<Celebrity> GetActor(int celebrityId);
+        Task<ICollection<Celebrity>> GetActorsOfAProduct(int productId);
+        Task<ICollection<Product>> GetProductsOfAnActor(int celebrityId);
     }
 }

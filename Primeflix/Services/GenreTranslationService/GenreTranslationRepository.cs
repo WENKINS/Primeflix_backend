@@ -12,56 +12,56 @@ namespace Primeflix.Services.GenreTranslationService
             _databaseContext = databaseContext;
         }
 
-        public bool GenreTranslationExists(int genreId, int languageId)
+        public async Task<bool> GenreTranslationExists(int genreId, int languageId)
         {
             return _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.LanguageId == languageId).Any();
         }
 
-        public ICollection<GenreTranslation> GetGenresTranslations()
+        public async Task<ICollection<GenreTranslation>> GetGenresTranslations()
         {
             return _databaseContext.GenresTranslations.ToList();
         }
 
-        public GenreTranslation GetGenreTranslation(int genreId, string languageCode)
+        public async Task<GenreTranslation> GetGenreTranslation(int genreId, string languageCode)
         {
             return _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.Language.Code == languageCode).FirstOrDefault();
         }
 
-        public bool IsDuplicate(int genreId, int languageId)
+        public async Task<bool> IsDuplicate(int genreId, int languageId)
         {
             var genreTranslation = _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.LanguageId == languageId).FirstOrDefault();
             return genreTranslation == null ? false : true;
         }
 
-        public ICollection<GenreTranslation> GetTranslationsOfAGenre(int genreId)
+        public async Task<ICollection<GenreTranslation>> GetTranslationsOfAGenre(int genreId)
         {
             return _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId).ToList();
         }
 
-        public ICollection<GenreTranslation> GetGenresOfALanguage(int languageId)
+        public async Task<ICollection<GenreTranslation>> GetGenresOfALanguage(int languageId)
         {
             return _databaseContext.GenresTranslations.Where(gt => gt.LanguageId == languageId).ToList();
         }
 
-        public bool CreateGenreTranslation(GenreTranslation genreTranslation)
+        public async Task<bool> CreateGenreTranslation(GenreTranslation genreTranslation)
         {
             _databaseContext.Add(genreTranslation);
-            return Save();
+            return await Save();
         }
 
-        public bool UpdateGenreTranslation(GenreTranslation genreTranslation)
+        public async Task<bool> UpdateGenreTranslation(GenreTranslation genreTranslation)
         {
             _databaseContext.Update(genreTranslation);
-            return Save();
+            return await Save();
         }
 
-        public bool DeleteGenreTranslation(GenreTranslation genreTranslation)
+        public async Task<bool> DeleteGenreTranslation(GenreTranslation genreTranslation)
         {
             _databaseContext.Remove(genreTranslation);
-            return Save();
+            return await Save();
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }

@@ -4,15 +4,15 @@ namespace Primeflix.Services.GenreTranslationService
 {
     public interface IGenreTranslationRepository
     {
-        ICollection<GenreTranslation> GetGenresTranslations();
-        GenreTranslation GetGenreTranslation(int genreId, string languageCode);
-        ICollection<GenreTranslation> GetTranslationsOfAGenre(int genreId);
-        ICollection<GenreTranslation> GetGenresOfALanguage(int languageId);
-        bool GenreTranslationExists(int genreId, int languageId);
-        bool IsDuplicate(int genreId, int languageId);
-        bool CreateGenreTranslation(GenreTranslation genreTranslation);
-        bool UpdateGenreTranslation(GenreTranslation genreTranslation);
-        bool DeleteGenreTranslation(GenreTranslation genreTranslation);
-        bool Save();
+        Task<ICollection<GenreTranslation>> GetGenresTranslations();
+        Task<GenreTranslation> GetGenreTranslation(int genreId, string languageCode);
+        Task<ICollection<GenreTranslation>> GetTranslationsOfAGenre(int genreId);
+        Task<ICollection<GenreTranslation>> GetGenresOfALanguage(int languageId);
+        Task<bool> GenreTranslationExists(int genreId, int languageId);
+        Task<bool> IsDuplicate(int genreId, int languageId);
+        Task<bool> CreateGenreTranslation(GenreTranslation genreTranslation);
+        Task<bool> UpdateGenreTranslation(GenreTranslation genreTranslation);
+        Task<bool> DeleteGenreTranslation(GenreTranslation genreTranslation);
+        Task<bool> Save();
     }
 }

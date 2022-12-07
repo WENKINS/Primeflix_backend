@@ -4,16 +4,16 @@ namespace Primeflix.Services.ProductService
 {
     public interface IProductRepository
     {
-        ICollection<Product> GetProducts();
-        Product GetProduct(int productId);
-        Product GetProduct(string title);
-        bool ProductExists(int productId);
-        bool ProductExists(string title);
-        bool IsDuplicate(int productId, string productTitle);
-        ICollection<Product> FilterResults(bool recentlyAdded, int formatId, List<int> genresId);
-        bool CreateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
-        bool UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
-        bool DeleteProduct(Product product);
-        bool Save();
+        Task<ICollection<Product>> GetProducts();
+        Task<Product> GetProduct(int productId);
+        Task<Product> GetProduct(string title);
+        Task<bool> ProductExists(int productId);
+        Task<bool> ProductExists(string title);
+        Task<bool> IsDuplicate(int productId, string productTitle);
+        Task<ICollection<Product>> FilterResults(bool recentlyAdded, int formatId, List<int> genresId);
+        Task<bool> CreateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
+        Task<bool> UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
+        Task<bool> DeleteProduct(Product product);
+        Task<bool> Save();
     }
 }

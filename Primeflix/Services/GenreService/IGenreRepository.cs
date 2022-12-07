@@ -4,18 +4,18 @@ namespace Primeflix.Services.GenreService
 {
     public interface IGenreRepository
     {
-        ICollection<Genre> GetGenres(string languageCode);
-        Genre GetGenre(int genreId);
-        Genre GetGenre(string genreName);
-        ICollection<Genre> GetGenresOfAProduct(int productId);
-        ICollection<Product> GetProductsOfAGenre(int genreId);
-        bool GenreExists(int genreId);
-        bool IsDuplicate(int genreId, string genreName);
+        Task<ICollection<Genre>> GetGenres(string languageCode);
+        Task<Genre> GetGenre(int genreId);
+        Task<Genre> GetGenre(string genreName);
+        Task<ICollection<Genre>> GetGenresOfAProduct(int productId);
+        Task<ICollection<Product>> GetProductsOfAGenre(int genreId);
+        Task<bool> GenreExists(int genreId);
+        Task<bool> IsDuplicate(int genreId, string genreName);
 
-        bool CreateGenre(Genre genre);
-        bool UpdateGenre(Genre genre);
-        bool DeleteGenre(Genre genre);
-        bool Save();
+        Task<bool> CreateGenre(Genre genre);
+        Task<bool> UpdateGenre(Genre genre);
+        Task<bool> DeleteGenre(Genre genre);
+        Task<bool> Save();
 
     }
 }
