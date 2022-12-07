@@ -1,7 +1,7 @@
 ﻿using Primeflix.Data;
 using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.GenreTranslationService
 {
     public class GenreTranslationRepository : IGenreTranslationRepository
     {

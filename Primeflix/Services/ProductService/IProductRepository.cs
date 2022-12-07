@@ -1,6 +1,6 @@
 ﻿using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.ProductService
 {
     public interface IProductRepository
     {

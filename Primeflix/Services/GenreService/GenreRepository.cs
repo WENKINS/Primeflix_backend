@@ -2,7 +2,7 @@
 using Primeflix.Data;
 using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.GenreService
 {
     public class GenreRepository : IGenreRepository
     {

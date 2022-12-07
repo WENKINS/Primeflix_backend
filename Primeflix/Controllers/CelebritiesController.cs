@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Primeflix.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
-using Primeflix.Services;
+using Primeflix.Services.CelebrityService;
 
 namespace Primeflix.Controllers
 {

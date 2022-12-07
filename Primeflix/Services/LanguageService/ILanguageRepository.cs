@@ -1,6 +1,6 @@
 ﻿using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.LanguageService
 {
     public interface ILanguageRepository
     {
