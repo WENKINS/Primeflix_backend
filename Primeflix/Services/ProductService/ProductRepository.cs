@@ -2,7 +2,7 @@
 using Primeflix.Data;
 using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.ProductService
 {
     public class ProductRepository : IProductRepository
     {
@@ -13,7 +13,7 @@ namespace Primeflix.Services
             _databaseContext = databaseContext;
         }
 
-        public bool CreateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId)
+        public async Task<bool> CreateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId)
         {
             var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();
             var actors = _databaseContext.Celebrities.Where(c => actorsId.Contains(c.Id)).ToList();
@@ -50,16 +50,16 @@ namespace Primeflix.Services
             }
 
             _databaseContext.Add(product);
-            return Save();
+            return await Save();
         }
 
-        public bool DeleteProduct(Product product)
+        public async Task<bool> DeleteProduct(Product product)
         {
             _databaseContext.Remove(product);
-            return Save();
+            return await Save();
         }
 
-        public ICollection<Product> FilterResults(bool recentlyAdded, int formatId, List<int> genresId)
+        public async Task<ICollection<Product>> FilterResults(bool recentlyAdded, int formatId, List<int> genresId)
         {
             var products = new List<Product>();
 
@@ -207,17 +207,17 @@ namespace Primeflix.Services
             return products;
         }
 
-        public Product GetProduct(int productId)
+        public async Task<Product> GetProduct(int productId)
         {
             return _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
         }
 
-        public Product GetProduct(string title)
+        public async Task<Product> GetProduct(string title)
         {
             return _databaseContext.Products.Where(p => p.Title == title).FirstOrDefault();
         }
 
-        public ICollection<Product> GetProducts()
+        public async Task<ICollection<Product>> GetProducts()
         {
             return _databaseContext.Products.OrderBy(p => p.Title)
                 .Include(p => p.DirectorsMovies)
@@ -226,7 +226,7 @@ namespace Primeflix.Services
                 .ToList();
         }
 
-        public bool IsDuplicate(int productId, string productTitle)
+        public async Task<bool> IsDuplicate(int productId, string productTitle)
         {
             var product = _databaseContext.Products.Where(p => p.Title.Trim().ToUpper() == productTitle.Trim().ToUpper() && p.Id != productId).FirstOrDefault();
             if (product != null)
@@ -237,22 +237,22 @@ namespace Primeflix.Services
             return false;
         }
 
-        public bool ProductExists(int productId)
+        public async Task<bool> ProductExists(int productId)
         {
             return _databaseContext.Products.Any(p => p.Id == productId);
         }
 
-        public bool ProductExists(string title)
+        public async Task<bool> ProductExists(string title)
         {
             return _databaseContext.Products.Any(p => p.Title == title);
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
 
-        public bool UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId)
+        public async Task<bool> UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId)
         {
             var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();
             var actors = _databaseContext.Celebrities.Where(c => actorsId.Contains(c.Id)).ToList();
@@ -297,7 +297,7 @@ namespace Primeflix.Services
             }
 
             _databaseContext.Update(product);
-            return Save();
+            return await Save();
         }
     }
 }

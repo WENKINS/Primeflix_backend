@@ -2,7 +2,7 @@
 using Primeflix.Data;
 using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.GenreService
 {
     public class GenreRepository : IGenreRepository
     {
@@ -13,12 +13,19 @@ namespace Primeflix.Services
             _databaseContext = databaseContext;
         }
 
-        public bool GenreExists(int genreId)
+        public async Task<bool> GenreExists(int genreId)
         {
             return _databaseContext.Genres.Any(g => g.Id == genreId);
         }
 
-        public ICollection<Genre> GetGenres(string languageCode)
+        public async Task<bool> GenreExists(Genre genre)
+        {
+            return _databaseContext.Genres
+                .Where(g => g.Name.Trim().ToUpper() == genre.Name.Trim().ToUpper())
+                .Any();
+        }
+
+        public async Task<ICollection<Genre>> GetGenres(string languageCode)
         {
             return _databaseContext.GenresTranslations
                 .Where(gt => gt.Language.Code == languageCode)
@@ -26,51 +33,51 @@ namespace Primeflix.Services
                 .ToList();
         }
 
-        public Genre GetGenre(int genreId)
+        public async Task<Genre> GetGenre(int genreId)
         {
             return _databaseContext.Genres.Where(g => g.Id == genreId).FirstOrDefault();
         }
 
-        public Genre GetGenre(string genreName)
+        public async Task<Genre> GetGenre(string genreName)
         {
             return _databaseContext.Genres.Where(g => g.Name == genreName).FirstOrDefault();
         }
 
-        public bool IsDuplicate(int genreId, string genreName)
+        public async Task<bool> IsDuplicate(int genreId, string genreName)
         {
             var genre = _databaseContext.Genres.Where(g => g.Name.Trim().ToUpper() == genreName.Trim().ToUpper() && g.Id != genreId).FirstOrDefault();
             return genre == null ? false : true;
         }
 
-        public ICollection<Genre> GetGenresOfAProduct(int productId)
+        public async Task<ICollection<Genre>> GetGenresOfAProduct(int productId)
         {
             return _databaseContext.ProductsGenres.Where(p => p.ProductId == productId).Select(g => g.Genre).ToList();
         }
 
-        public ICollection<Product> GetProductsOfAGenre(int genreId)
+        public async Task<ICollection<Product>> GetProductsOfAGenre(int genreId)
         {
             return _databaseContext.ProductsGenres.Where(g => g.GenreId == genreId).Select(p => p.Product).ToList();
         }
 
-        public bool CreateGenre(Genre genre)
+        public async Task<bool> CreateGenre(Genre genre)
         {
             _databaseContext.Add(genre);
-            return Save();
+            return await Save();
         }
 
-        public bool UpdateGenre(Genre genre)
+        public async Task<bool> UpdateGenre(Genre genre)
         {
             _databaseContext.Update(genre);
-            return Save();
+            return await Save();
         }
 
-        public bool DeleteGenre(Genre genre)
+        public async Task<bool> DeleteGenre(Genre genre)
         {
             _databaseContext.Remove(genre);
-            return Save();
+            return await Save();
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }

@@ -2,7 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using MySql.EntityFrameworkCore.Extensions;
 using Primeflix.Data;
-using Primeflix.Services;
+using Primeflix.Services.CelebrityService;
+using Primeflix.Services.FormatService;
+using Primeflix.Services.GenreService;
+using Primeflix.Services.GenreTranslationService;
+using Primeflix.Services.LanguageService;
+using Primeflix.Services.ProductService;
+using Primeflix.Services.ProductTranslationService;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,7 +1,7 @@
 ﻿using Primeflix.Data;
 using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.ProductTranslationService
 {
     public class ProductTranslationRepository : IProductTranslationRepository
     {
@@ -12,56 +12,56 @@ namespace Primeflix.Services
             _databaseContext = databaseContext;
         }
 
-        public bool ProductTranslationExists(int productId, int languageId)
+        public async Task<bool> ProductTranslationExists(int productId, int languageId)
         {
             return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.LanguageId == languageId).Any();
         }
 
-        public ICollection<ProductTranslation> GetProductsTranslations()
+        public async Task<ICollection<ProductTranslation>> GetProductsTranslations()
         {
             return _databaseContext.ProductsTranslations.ToList();
         }
 
-        public ProductTranslation GetProductTranslation(int productId, string languageCode)
+        public async Task<ProductTranslation> GetProductTranslation(int productId, string languageCode)
         {
             return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.Language.Code == languageCode).FirstOrDefault();
         }
 
-        public bool IsDuplicate(int productId, int languageId)
+        public async Task<bool> IsDuplicate(int productId, int languageId)
         {
             var productTranslation = _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.LanguageId == languageId).FirstOrDefault();
             return productTranslation == null ? false : true;
         }
 
-        public ICollection<ProductTranslation> GetTranslationsOfAProduct(int productId)
+        public async Task<ICollection<ProductTranslation>> GetTranslationsOfAProduct(int productId)
         {
             return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId).ToList();
         }
 
-        public ICollection<ProductTranslation> GetProductsOfALanguage(int languageId)
+        public async Task<ICollection<ProductTranslation>> GetProductsOfALanguage(int languageId)
         {
             return _databaseContext.ProductsTranslations.Where(pt => pt.LanguageId == languageId).ToList();
         }
 
-        public bool CreateProductTranslation(ProductTranslation productTranslation)
+        public async Task<bool> CreateProductTranslation(ProductTranslation productTranslation)
         {
             _databaseContext.Add(productTranslation);
-            return Save();
+            return await Save();
         }
 
-        public bool UpdateProductTranslation(ProductTranslation productTranslation)
+        public async Task<bool> UpdateProductTranslation(ProductTranslation productTranslation)
         {
             _databaseContext.Update(productTranslation);
-            return Save();
+            return await Save();
         }
 
-        public bool DeleteProductTranslation(ProductTranslation productTranslation)
+        public async Task<bool> DeleteProductTranslation(ProductTranslation productTranslation)
         {
             _databaseContext.Remove(productTranslation);
-            return Save();
+            return await Save();
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }

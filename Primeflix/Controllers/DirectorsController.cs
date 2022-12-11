@@ -1,6 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
-using Primeflix.Services;
+using Primeflix.Services.CelebrityService;
+using Primeflix.Services.FormatService;
+using Primeflix.Services.GenreService;
+using Primeflix.Services.GenreTranslationService;
+using Primeflix.Services.ProductService;
+using Primeflix.Services.ProductTranslationService;
 
 namespace Primeflix.Controllers
 {
@@ -36,9 +41,9 @@ namespace Primeflix.Controllers
         [HttpGet]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
-        public IActionResult GetDirectors()
+        public async Task<IActionResult> GetDirectors()
         {
-            var celebrities = _celebrityRepository.GetDirectors();
+            var celebrities = await _celebrityRepository.GetDirectors();
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -61,12 +66,12 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
-        public IActionResult GetDirector(int celebrityId)
+        public async Task<IActionResult> GetDirector(int celebrityId)
         {
-            if (!_celebrityRepository.DirectorExists(celebrityId))
+            if (!await _celebrityRepository.DirectorExists(celebrityId))
                 return NotFound();
 
-            var director = _celebrityRepository.GetDirector(celebrityId);
+            var director = await _celebrityRepository.GetDirector(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -86,12 +91,12 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
-        public IActionResult GetDirectorsOfAProduct(int productId)
+        public async Task<IActionResult> GetDirectorsOfAProduct(int productId)
         {
-            if (!_productRepository.ProductExists(productId))
+            if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
-            var directors = _celebrityRepository.GetDirectorsOfAProduct(productId);
+            var directors = await _celebrityRepository.GetDirectorsOfAProduct(productId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -118,12 +123,12 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public IActionResult GetProductsOfADirector(int celebrityId, string languageCode)
+        public async Task<IActionResult> GetProductsOfADirector(int celebrityId, string languageCode)
         {
-            if (!_celebrityRepository.DirectorExists(celebrityId))
+            if (!await _celebrityRepository.DirectorExists(celebrityId))
                 return NotFound();
 
-            var products = _celebrityRepository.GetProductsOfADirector(celebrityId);
+            var products = await _celebrityRepository.GetProductsOfADirector(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -132,7 +137,7 @@ namespace Primeflix.Controllers
 
             foreach (var product in products)
             {
-                var directors = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
+                var directors = await _celebrityRepository.GetDirectorsOfAProduct(product.Id);
                 var directorsDto = new List<CelebrityDto>();
 
                 foreach (var director in directors)
@@ -145,7 +150,7 @@ namespace Primeflix.Controllers
                     });
                 }
 
-                var actors = _celebrityRepository.GetActorsOfAProduct(product.Id);
+                var actors = await _celebrityRepository.GetActorsOfAProduct(product.Id);
                 var actorsDto = new List<CelebrityDto>();
 
                 foreach (var actor in actors)
@@ -158,12 +163,12 @@ namespace Primeflix.Controllers
                     });
                 }
 
-                var genres = _genreRepository.GetGenresOfAProduct(product.Id);
+                var genres = await _genreRepository.GetGenresOfAProduct(product.Id);
                 var genresDto = new List<GenreDto>();
 
                 foreach (var genre in genres)
                 {
-                    var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                     genresDto.Add(new GenreDto
                     {
                         Id = genre.Id,
@@ -171,14 +176,14 @@ namespace Primeflix.Controllers
                     });
                 }
                 
-                var oFormat = _formatRepository.GetFormatOfAProduct(product.Id);
+                var oFormat = await _formatRepository.GetFormatOfAProduct(product.Id);
                 var formatDto = new FormatDto()
                 {
                     Id = oFormat.Id,
                     Name = oFormat.Name
                 };
 
-                var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
 
                 productsDto.Add(new ProductDetailsDto
                 {
