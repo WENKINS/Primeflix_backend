@@ -16,7 +16,6 @@ namespace Primeflix.Controllers
         }
 
         //api/users/register
-        [HttpPost]
         [ProducesResponseType(201, Type = typeof(UserDto))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
@@ -49,6 +48,32 @@ namespace Primeflix.Controllers
             }
 
             return CreatedAtRoute("GetUser", new { userId = user.Id }, user);
+        }
+
+
+        //api/users/login
+        [ProducesResponseType(201, Type = typeof(UserDto))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(UserLoginDto userLogin)
+        {
+            if (userLogin == null)
+                return BadRequest(ModelState);
+
+            if (!await _authentication.UserExists(userLogin.Email))
+            {
+                ModelState.AddModelError("", $"User {userLogin.Email} doesn't exists"); // SECURITY RISK!
+                return StatusCode(422, ModelState);
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var response = await _authentication.Login(userLogin.Email, userLogin.Password);
+
+            return Ok(response);
         }
 
         //api/users/userId

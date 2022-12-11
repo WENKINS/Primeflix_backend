@@ -1,21 +1,39 @@
-﻿using Primeflix.Data;
+﻿using Microsoft.IdentityModel.Tokens;
+using Primeflix.Data;
 using Primeflix.DTO;
 using Primeflix.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Primeflix.Services.Authentication
 {
     public class Authentication : IAuthentication
     {
         private DatabaseContext _databaseContext;
+        private readonly IConfiguration _configuration;
 
-        public Authentication(DatabaseContext databaseContext)
+        public Authentication(DatabaseContext databaseContext, IConfiguration configuration)
         {
             _databaseContext = databaseContext;
+            _configuration = configuration;
         }
 
         public async Task<string> Login(string email, string password)
         {
-            throw new NotImplementedException();
+            var user = _databaseContext.Users.Where(u => u.Email == email).FirstOrDefault();
+
+            if(user == null)
+            {
+                return "User not found"; // SECURITY RISK!
+            }
+
+            if(user.Password == password)
+            {
+                return CreateToken(user);
+            }
+
+            return "Wrong password";
         }
 
         public async Task<bool> Register(User user)
@@ -55,6 +73,31 @@ namespace Primeflix.Services.Authentication
         public async Task<bool> Save()
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
+        }
+
+        private string CreateToken(User user)
+        {
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
+
+            SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
+
+            SigningCredentials credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+
+            SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(1),
+                SigningCredentials = credentials
+            };
+
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
         }
     }
 }
