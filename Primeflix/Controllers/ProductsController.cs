@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.CelebrityService;
@@ -41,6 +42,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/languageCode/params
+        [AllowAnonymous]
         [HttpGet("{languageCode}", Name = "GetProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
@@ -137,6 +139,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/productId
+        [AllowAnonymous]
         [HttpGet("{languageCode}/{productId}", Name = "GetProduct")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -220,6 +223,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/genres/productId
+        [AllowAnonymous]
         [HttpGet("genres/{languageCode}/{productId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -249,6 +253,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
+        [Authorize]
         [HttpPost]
         [ProducesResponseType(201, Type = typeof(Product))]
         [ProducesResponseType(400)]
@@ -276,6 +281,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/productId?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
+        [Authorize]
         [HttpPut("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
@@ -308,6 +314,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/productId
+        [Authorize]
         [HttpDelete("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]

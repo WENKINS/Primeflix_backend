@@ -21,7 +21,7 @@ namespace Primeflix.Services.Authentication
 
         public async Task<string> Login(string email, string password)
         {
-            var user = _databaseContext.Users.Where(u => u.Email == email).FirstOrDefault();
+            var user = _databaseContext.Users.Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper())).FirstOrDefault();
 
             if(user == null)
             {
@@ -45,7 +45,7 @@ namespace Primeflix.Services.Authentication
         public async Task<bool> UserExists(string email)
         {
             return _databaseContext.Users
-            .Where(u => u.Email.Trim().ToUpper() == email.Trim().ToUpper())
+            .Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper()))
             .Any();
         }
 
@@ -59,7 +59,7 @@ namespace Primeflix.Services.Authentication
         public async Task<User> GetUser(string email)
         {
             return _databaseContext.Users
-                .Where(u => u.Email.Trim().ToUpper() == email.Trim().ToUpper())
+                .Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper()))
                 .FirstOrDefault();
         }
 
