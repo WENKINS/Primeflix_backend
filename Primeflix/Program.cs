@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using MySql.EntityFrameworkCore.Extensions;
 using Primeflix.Data;
+using Primeflix.Services.Authentication;
 using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FormatService;
 using Primeflix.Services.GenreService;
@@ -29,6 +30,7 @@ builder.Services.AddScoped<IFormatRepository, FormatRepository>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 builder.Services.AddScoped<IGenreTranslationRepository, GenreTranslationRepository>();
 builder.Services.AddScoped<IProductTranslationRepository, ProductTranslationRepository>();
+builder.Services.AddScoped<IAuthentication, Authentication>();
 builder.Services.AddEntityFrameworkMySQL().AddDbContext<DatabaseContext>(options =>
 {
     options.UseMySQL(builder.Configuration.GetConnectionString("DBConnection"));
