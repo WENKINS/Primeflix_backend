@@ -44,7 +44,7 @@ namespace Primeflix.Controllers
         [HttpGet("{languageCode}", Name = "GetProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public IActionResult GetProducts(string languageCode, [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genres = null)
+        public async Task<IActionResult> GetProducts(string languageCode, [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genres = null)
         {
             List<int> genresId = new List<int>();
 
@@ -65,10 +65,11 @@ namespace Primeflix.Controllers
 
             if (!Equals("All", format))
             {
-                formatId = _formatRepository.GetFormat(format).Id;
+                var productFormat = await _formatRepository.GetFormat(format);
+                formatId = productFormat.Id;
             }
 
-            var products = _productRepository.FilterResults(recentlyAdded, formatId, genresId).ToList();
+            var products = await _productRepository.FilterResults(recentlyAdded, formatId, genresId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -77,12 +78,12 @@ namespace Primeflix.Controllers
 
             foreach (var product in products)
             {
-                var oGenres = _genreRepository.GetGenresOfAProduct(product.Id);
+                var oGenres = await _genreRepository.GetGenresOfAProduct(product.Id);
                 var genresDto = new List<GenreDto>();
 
                 foreach (var genre in oGenres)
                 {
-                    var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                     genresDto.Add(new GenreDto
                     {
                         Id = genre.Id,
@@ -90,14 +91,14 @@ namespace Primeflix.Controllers
                     });
                 }
 
-                var oFormat = _formatRepository.GetFormatOfAProduct(product.Id);
+                var oFormat = await _formatRepository.GetFormatOfAProduct(product.Id);
                 var formatDto = new FormatDto()
                 {
                     Id = oFormat.Id,
                     Name = oFormat.Name
                 };
 
-                var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
 
                 if (productTranslation != null)
                 {
@@ -140,17 +141,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public IActionResult GetProduct(int productId, string languageCode)
+        public async Task<IActionResult> GetProduct(int productId, string languageCode)
         {
-            if (!_productRepository.ProductExists(productId))
+            if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
-            var product = _productRepository.GetProduct(productId);
+            var product = await _productRepository.GetProduct(productId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var directors = _celebrityRepository.GetDirectorsOfAProduct(product.Id);
+            var directors = await _celebrityRepository.GetDirectorsOfAProduct(product.Id);
             var directorsDto = new List<CelebrityDto>();
 
             foreach (var director in directors)
@@ -163,7 +164,7 @@ namespace Primeflix.Controllers
                 });
             }
 
-            var actors = _celebrityRepository.GetActorsOfAProduct(product.Id);
+            var actors = await _celebrityRepository.GetActorsOfAProduct(product.Id);
             var actorsDto = new List<CelebrityDto>();
 
             foreach (var actor in actors)
@@ -176,12 +177,12 @@ namespace Primeflix.Controllers
                 });
             }
 
-            var genres = _genreRepository.GetGenresOfAProduct(product.Id);
+            var genres = await _genreRepository.GetGenresOfAProduct(product.Id);
             var genresDto = new List<GenreDto>();
 
             foreach (var genre in genres)
             {
-                var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                 genresDto.Add(new GenreDto
                 {
                     Id = genre.Id,
@@ -189,14 +190,14 @@ namespace Primeflix.Controllers
                 });
             }
 
-            var oFormat = _formatRepository.GetFormatOfAProduct(product.Id);
+            var oFormat = await _formatRepository.GetFormatOfAProduct(product.Id);
             var formatDto = new FormatDto()
             {
                 Id = oFormat.Id,
                 Name = oFormat.Name
             };
 
-            var productTranslation = _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+            var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
 
             var productDto = new ProductDetailsDto()
             {
@@ -223,17 +224,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public IActionResult GetGenresOfAProduct(int productId, string languageCode)
+        public async Task<IActionResult> GetGenresOfAProduct(int productId, string languageCode)
         {
-            if (!_productRepository.ProductExists(productId))
+            if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
-            var genres = _genreRepository.GetGenresOfAProduct(productId);
+            var genres = await _genreRepository.GetGenresOfAProduct(productId);
 
             var genresDto = new List<GenreDto>();
             foreach (var genre in genres)
             {
-                var genreTranslation = _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
                 genresDto.Add(new GenreDto()
                 {
                     Id = genre.Id,
@@ -253,19 +254,19 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult CreateProduct([FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToCreate)
+        public async Task<IActionResult> CreateProduct([FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToCreate)
         {
-            var statusCode = ValidateProduct(dirId, actId, genresId, productToCreate);
+            var statusCode = await ValidateProduct(dirId, actId, genresId, productToCreate);
 
             if (!ModelState.IsValid)
                 return StatusCode(statusCode.StatusCode);
 
-            productToCreate.Format = _formatRepository.GetFormat(productToCreate.Format.Id);
+            productToCreate.Format = await _formatRepository.GetFormat(productToCreate.Format.Id);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_productRepository.CreateProduct(productToCreate, dirId, actId, genresId))
+            if (!await _productRepository.CreateProduct(productToCreate, dirId, actId, genresId))
             {
                 ModelState.AddModelError("", $"Something went wrong saving the product {productToCreate.Title}");
                 return StatusCode(500, ModelState);
@@ -281,23 +282,23 @@ namespace Primeflix.Controllers
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult UpdateProduct(int productId, [FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToUpdate)
+        public async Task<IActionResult> UpdateProduct(int productId, [FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToUpdate)
         {
 
-            var statusCode = ValidateProduct(dirId, actId, genresId, productToUpdate);
+            var statusCode = await ValidateProduct(dirId, actId, genresId, productToUpdate);
 
             if (productId != productToUpdate.Id)
                 return BadRequest();
 
-            if (!_productRepository.ProductExists(productId))
+            if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
-            productToUpdate.Format = _formatRepository.GetFormat(productToUpdate.Format.Id);
+            productToUpdate.Format = await _formatRepository.GetFormat(productToUpdate.Format.Id);
 
             if (!ModelState.IsValid)
                 return StatusCode(statusCode.StatusCode);
 
-            if (!_productRepository.UpdateProduct(productToUpdate, dirId, actId, genresId))
+            if (!await _productRepository.UpdateProduct(productToUpdate, dirId, actId, genresId))
             {
                 ModelState.AddModelError("", $"Something went wrong updating the product {productToUpdate.Title}");
                 return StatusCode(500, ModelState);
@@ -314,17 +315,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(409)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult DeleteProduct(int productId)
+        public async Task<IActionResult> DeleteProduct(int productId)
         {
-            if (!_productRepository.ProductExists(productId))
+            if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
-            var productToDelete = _productRepository.GetProduct(productId);
+            var productToDelete = await _productRepository.GetProduct(productId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_productRepository.DeleteProduct(productToDelete))
+            if (!await _productRepository.DeleteProduct(productToDelete))
             {
                 ModelState.AddModelError("", $"Something went wrong deleting {productToDelete.Title}");
                 return StatusCode(500, ModelState);
@@ -333,7 +334,7 @@ namespace Primeflix.Controllers
             return NoContent();
         }
 
-        private StatusCodeResult ValidateProduct(List<int> directorsId, List<int> actorsId, List<int> genresId, Product product)
+        private async Task<StatusCodeResult> ValidateProduct(List<int> directorsId, List<int> actorsId, List<int> genresId, Product product)
         {
             if (product == null || directorsId.Count() <= 0 || actorsId.Count() <= 0 || genresId.Count() <= 0)
             {
@@ -341,13 +342,13 @@ namespace Primeflix.Controllers
                 return BadRequest();
             }
 
-            if(_productRepository.IsDuplicate(product.Id, product.Title))
+            if(await _productRepository.IsDuplicate(product.Id, product.Title))
             {
                 ModelState.AddModelError("", "Duplicate title");
                 return StatusCode(422);
             }
 
-            if (!_formatRepository.FormatExists(product.Format.Id))
+            if (!await _formatRepository.FormatExists(product.Format.Id))
             {
                 ModelState.AddModelError("", "Format doesn't exist");
                 return StatusCode(404);
@@ -355,7 +356,7 @@ namespace Primeflix.Controllers
 
             foreach (var id in directorsId)
             {
-                if(!_celebrityRepository.CelebrityExists(id))
+                if(!await _celebrityRepository.CelebrityExists(id))
                 {
                     ModelState.AddModelError("", "Celebrity Not Found");
                     return StatusCode(404);
@@ -364,7 +365,7 @@ namespace Primeflix.Controllers
 
             foreach (var id in actorsId)
             {
-                if (!_celebrityRepository.CelebrityExists(id))
+                if (!await _celebrityRepository.CelebrityExists(id))
                 {
                     ModelState.AddModelError("", "Celebrity Not Found");
                     return StatusCode(404);
@@ -373,7 +374,7 @@ namespace Primeflix.Controllers
 
             foreach (var id in genresId)
             {
-                if (!_genreRepository.GenreExists(id))
+                if (!await _genreRepository.GenreExists(id))
                 {
                     ModelState.AddModelError("", "Genre Not Found");
                     return StatusCode(404);

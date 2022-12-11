@@ -76,11 +76,7 @@ namespace Primeflix.Controllers
             if (celebrityToCreate == null)
                 return BadRequest(ModelState);
 
-            var celebrity = await _celebrityRepository.GetCelebrities()
-                .Where(c => c.FirstName.Trim().ToUpper() == celebrityToCreate.FirstName.Trim().ToUpper() && c.LastName.Trim().ToUpper() == celebrityToCreate.LastName.Trim().ToUpper())
-                .FirstOrDefault();
-
-            if (celebrity != null)
+            if (await _celebrityRepository.CelebrityExists(celebrityToCreate))
             {
                 ModelState.AddModelError("", $"Celebrity {celebrityToCreate.FirstName} {celebrityToCreate.LastName} already exists");
                 return StatusCode(422, ModelState);

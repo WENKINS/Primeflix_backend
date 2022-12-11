@@ -5,6 +5,7 @@ namespace Primeflix.Services.CelebrityService
     public interface ICelebrityRepository
     {
         Task<bool> CelebrityExists(int celebrityId);
+        Task<bool> CelebrityExists(Celebrity celebrity);
         Task<bool> IsDuplicate(int celebrityId, string firstName, string lastName);
         Task<ICollection<Celebrity>> GetCelebrities();
         Task<Celebrity> GetCelebrity(int celebrityId);

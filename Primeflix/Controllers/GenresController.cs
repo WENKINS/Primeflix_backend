@@ -171,11 +171,7 @@ namespace Primeflix.Controllers
             if (genreToCreate == null)
                 return BadRequest(ModelState);
 
-            var genre = _genreRepository.GetGenres("fr")
-                .Where(g => g.Name.Trim().ToUpper() == genreToCreate.Name.Trim().ToUpper())
-                .FirstOrDefault();
-
-            if (genre != null)
+            if (await _genreRepository.GenreExists(genreToCreate))
             {
                 ModelState.AddModelError("", $"Genre {genreToCreate.Name} already exists");
                 return StatusCode(422, ModelState);
@@ -244,7 +240,9 @@ namespace Primeflix.Controllers
 
             var genreToDelete = await _genreRepository.GetGenre(genreId);
 
-            if(await _genreRepository.GetProductsOfAGenre(genreId).Count() >0)
+            var products = await _genreRepository.GetProductsOfAGenre(genreId);
+
+            if(products.Count() >0)
             {
                 ModelState.AddModelError("", $"Genre {genreToDelete.Name} cannot be deleted because it is used by at least one product");
                 return StatusCode(409, ModelState);

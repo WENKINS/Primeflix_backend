@@ -18,6 +18,13 @@ namespace Primeflix.Services.GenreService
             return _databaseContext.Genres.Any(g => g.Id == genreId);
         }
 
+        public async Task<bool> GenreExists(Genre genre)
+        {
+            return _databaseContext.Genres
+                .Where(g => g.Name.Trim().ToUpper() == genre.Name.Trim().ToUpper())
+                .Any();
+        }
+
         public async Task<ICollection<Genre>> GetGenres(string languageCode)
         {
             return _databaseContext.GenresTranslations

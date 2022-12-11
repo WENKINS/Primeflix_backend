@@ -16,6 +16,13 @@ namespace Primeflix.Services.CelebrityService
             return _databaseContext.Celebrities.Any(c => c.Id == celebrityId);
         }
 
+        public async Task<bool> CelebrityExists(Celebrity celebrity)
+        {
+            return _databaseContext.Celebrities.OrderBy(c => c.LastName)
+                .Where(c => c.FirstName.Trim().ToUpper() == celebrity.FirstName.Trim().ToUpper() && c.LastName.Trim().ToUpper() == celebrity.LastName.Trim().ToUpper())
+                .Any();
+        }
+
         public async Task<bool> IsDuplicate(int celebrityId, string firstName, string lastName)
         {
             var celebrity = _databaseContext.Celebrities.Where(c => c.FirstName.Trim().ToUpper() == firstName.Trim().ToUpper() && c.LastName.Trim().ToUpper() == lastName.Trim().ToUpper() && c.Id != celebrityId).FirstOrDefault();
