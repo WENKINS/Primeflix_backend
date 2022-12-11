@@ -48,5 +48,6 @@ namespace Primeflix.Data
         public virtual DbSet<Language> Languages { get; set; }
         public virtual DbSet<ProductTranslation> ProductsTranslations { get; set; }
         public virtual DbSet<GenreTranslation> GenresTranslations { get; set; }
+        public virtual DbSet<User> Users { get; set; }
     }
 }
