@@ -56,6 +56,11 @@ namespace Primeflix.Services.Authentication
             .Any();
         }
 
+        public async Task<IEnumerable<User>> GetUsers()
+        {
+            return _databaseContext.Users.OrderBy(u => u.Email).ToList();
+        }
+
         public async Task<User> GetUser(string email)
         {
             return _databaseContext.Users

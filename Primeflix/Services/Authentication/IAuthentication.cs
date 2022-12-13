@@ -9,6 +9,7 @@ namespace Primeflix.Services.Authentication
         Task<string> Login(string email, string password);
         Task<bool> UserExists(string email);
         Task<bool> UserExists(int userId);
+        Task<IEnumerable<User>> GetUsers();
         Task<User> GetUser(string email);
         Task<User> GetUser(int userId);
         Task<bool> Save();

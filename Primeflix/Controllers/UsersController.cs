@@ -76,11 +76,39 @@ namespace Primeflix.Controllers
             return Ok(response);
         }
 
+        //api/users
+        [HttpGet]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<UserDto>))]
+        public async Task<IActionResult> GetUsers()
+        {
+            var users = await _authentication.GetUsers();
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var usersDto = new List<UserDto>();
+            foreach (var user in users)
+            {
+                usersDto.Add(new UserDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Phone = user.Phone,
+                    Email = user.Email,
+                    Password = user.Password,
+                    Language = user.Language
+                });
+            }
+            return Ok(usersDto);
+        }
+
         //api/users/userId
         [HttpGet("{userId}", Name = "GetUser")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<UserDto>))]
+        [ProducesResponseType(200, Type = typeof(UserDto))]
         public async Task<IActionResult> GetUser(int userId)
         {
             if (!await _authentication.UserExists(userId))
