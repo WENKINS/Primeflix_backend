@@ -32,6 +32,11 @@ namespace Primeflix.Services.LanguageService
             return _databaseContext.Languages.Where(l => l.Code == languageCode).FirstOrDefault();
         }
 
+        public async Task<Language> GetLanguageOfAUser(int userId)
+        {
+            return _databaseContext.Users.Where(u => u.Id == userId).Select(u => u.Language).FirstOrDefault();
+        }
+
         public async Task<bool> IsDuplicate(int languageId, string languageName)
         {
             var language = _databaseContext.Languages.Where(l => l.Name.Trim().ToUpper() == languageName.Trim().ToUpper() && l.Id != languageId).FirstOrDefault();

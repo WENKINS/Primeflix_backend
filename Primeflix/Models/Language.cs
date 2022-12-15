@@ -17,5 +17,6 @@ namespace Primeflix.Models
         // Relationships
         public virtual ICollection<ProductTranslation>? ProductsTranslations { get; set; }
         public virtual ICollection<GenreTranslation>? GenresTranslations { get; set; }
+        public virtual ICollection<User>? Users { get; set; }
     }
 }

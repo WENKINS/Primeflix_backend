@@ -1,18 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.Authentication;
+using Primeflix.Services.LanguageService;
 
 namespace Primeflix.Controllers
 {
+    [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : Controller
     {
         private IAuthentication _authentication;
-        public UsersController(IAuthentication authentication)
+        private ILanguageRepository _languageRepository;
+        public UsersController(IAuthentication authentication, ILanguageRepository languageRepository)
         {
             _authentication = authentication;
+            _languageRepository = languageRepository;
         }
 
         //api/users/register
@@ -90,6 +95,14 @@ namespace Primeflix.Controllers
             var usersDto = new List<UserDto>();
             foreach (var user in users)
             {
+                var language = await _languageRepository.GetLanguageOfAUser(user.Id);
+                var languageDto = new LanguageDto()
+                {
+                    Id = language.Id,
+                    Name = language.Name,
+                    Code = language.Code
+                };
+
                 usersDto.Add(new UserDto
                 {
                     Id = user.Id,
@@ -98,7 +111,7 @@ namespace Primeflix.Controllers
                     Phone = user.Phone,
                     Email = user.Email,
                     Password = user.Password,
-                    Language = user.Language
+                    Language = languageDto
                 });
             }
             return Ok(usersDto);
@@ -119,6 +132,14 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var language = await _languageRepository.GetLanguageOfAUser(user.Id);
+            var languageDto = new LanguageDto()
+            {
+                Id = language.Id,
+                Name = language.Name,
+                Code = language.Code
+            };
+
             var userDto = new UserDto()
             {
                 Id = user.Id,
@@ -126,7 +147,7 @@ namespace Primeflix.Controllers
                 LastName = user.LastName,
                 Email = user.Email,
                 Password = user.Password,
-                Language = user.Language
+                Language = languageDto
             };
 
             return Ok(userDto);

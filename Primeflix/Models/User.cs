@@ -16,6 +16,9 @@ namespace Primeflix.Models
         public string? Phone { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        public string? Language { get; set; }
+        [Column("language_id")]
+        public int LanguageId { get; set; }
+
+        public Language Language { get; set; }
     }
 }
