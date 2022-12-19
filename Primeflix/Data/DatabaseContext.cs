@@ -19,7 +19,8 @@ namespace Primeflix.Data
             modelBuilder.Entity<ProductGenre>().HasKey(pg => new { pg.ProductId, pg.GenreId });
             modelBuilder.Entity<ProductTranslation>().HasKey(pt => new { pt.ProductId, pt.LanguageId});
             modelBuilder.Entity<GenreTranslation>().HasKey(gt => new { gt.GenreId, gt.LanguageId });
-            modelBuilder.Entity<User>().HasKey(u => new { u.LanguageId });
+            modelBuilder.Entity<CartProduct>().HasKey(cp => new { cp.CartId, cp.ProductId });
+            modelBuilder.Entity<OrderDetails>().HasKey(od => new { od.OrderId, od.ProductId });
 
             modelBuilder.Entity<Actor>().HasOne(p => p.Product).WithMany(a => a.ActorsMovies).HasForeignKey(p => p.ProductId);
             modelBuilder.Entity<Actor>().HasOne(c => c.Celebrity).WithMany(a => a.ActorsMovies).HasForeignKey(c => c.CelebrityId);
@@ -36,7 +37,11 @@ namespace Primeflix.Data
             modelBuilder.Entity<GenreTranslation>().HasOne(l => l.Language).WithMany(gt => gt.GenresTranslations).HasForeignKey(l => l.LanguageId);
             modelBuilder.Entity<GenreTranslation>().HasOne(g => g.Genre).WithMany(gt => gt.GenresTranslations).HasForeignKey(g => g.GenreId);
 
-            modelBuilder.Entity<User>().HasOne(l => l.Language).WithMany(u => u.Users).HasForeignKey(l => l.LanguageId);
+            modelBuilder.Entity<CartProduct>().HasOne(c => c.Cart).WithMany(cp => cp.CartProducts).HasForeignKey(c => c.CartId);
+            modelBuilder.Entity<CartProduct>().HasOne(p => p.Product).WithMany(cp => cp.CartProducts).HasForeignKey(p => p.ProductId);
+
+            modelBuilder.Entity<OrderDetails>().HasOne(o => o.Order).WithMany(od => od.OrderDetails).HasForeignKey(o => o.OrderId);
+            modelBuilder.Entity<OrderDetails>().HasOne(p => p.Product).WithMany(od => od.OrderDetails).HasForeignKey(p => p.ProductId);
 
             base.OnModelCreating(modelBuilder);
         }
@@ -52,5 +57,9 @@ namespace Primeflix.Data
         public virtual DbSet<ProductTranslation> ProductsTranslations { get; set; }
         public virtual DbSet<GenreTranslation> GenresTranslations { get; set; }
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<Cart> Carts { get; set; }
+        public virtual DbSet<CartProduct> CartProducts { get; set; }
+        public virtual DbSet<Order> Orders { get; set; }
+        public virtual DbSet<OrderDetails> OrderDetails { get; set; }
     }
 }

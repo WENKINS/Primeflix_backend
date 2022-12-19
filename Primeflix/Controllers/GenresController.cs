@@ -35,13 +35,13 @@ namespace Primeflix.Controllers
             _productTranslationRepository = productTranslationRepository;
         }
 
-        //api/genres/languageCode
-        [HttpGet("{languageCode}")]
+        //api/genres
+        [HttpGet()]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public async Task<IActionResult> GetGenres(string languageCode)
+        public async Task<IActionResult> GetGenres([FromQuery]string? lan = "en")
         {
-            var genres = await _genreRepository.GetGenres(languageCode);
+            var genres = await _genreRepository.GetGenres(lan);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -49,7 +49,7 @@ namespace Primeflix.Controllers
             var genresDto = new List<GenreDto>();
             foreach (var genre in genres)
             {
-                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lan);
                 genresDto.Add(new GenreDto
                 {
                     Id = genre.Id,

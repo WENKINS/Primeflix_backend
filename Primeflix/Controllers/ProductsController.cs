@@ -138,6 +138,80 @@ namespace Primeflix.Controllers
             return Ok(productsDto);
         }
 
+        //api/products/search
+        [AllowAnonymous]
+        [HttpGet("search/{searchText}", Name = "SearchProducts")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        public async Task<IActionResult> SearchProducts(string searchText)
+        {
+            var products = await _productRepository.SearchProducts(searchText);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var productsDto = new List<ProductDto>();
+
+            foreach (var product in products)
+            {
+                var oGenres = await _genreRepository.GetGenresOfAProduct(product.Id);
+                var genresDto = new List<GenreDto>();
+
+                foreach (var genre in oGenres)
+                {
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, "en");
+                    genresDto.Add(new GenreDto
+                    {
+                        Id = genre.Id,
+                        Name = genreTranslation.Translation
+                    });
+                }
+
+                var oFormat = await _formatRepository.GetFormatOfAProduct(product.Id);
+                var formatDto = new FormatDto()
+                {
+                    Id = oFormat.Id,
+                    Name = oFormat.Name
+                };
+
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, "en");
+
+                if (productTranslation != null)
+                {
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Title = productTranslation.Title,
+                        ReleaseDate = product.ReleaseDate,
+                        Stock = product.Stock,
+                        Rating = product.Rating,
+                        Format = formatDto,
+                        PictureUrl = product.PictureUrl,
+                        Price = product.Price,
+                        Genres = genresDto
+                    });
+                }
+
+                else
+                {
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Title = product.Title,
+                        ReleaseDate = product.ReleaseDate,
+                        Stock = product.Stock,
+                        Rating = product.Rating,
+                        Format = formatDto,
+                        PictureUrl = product.PictureUrl,
+                        Price = product.Price,
+                        Genres = genresDto
+                    });
+                }
+
+            }
+            return Ok(productsDto);
+        }
+
         //api/productId
         [AllowAnonymous]
         [HttpGet("{productId}", Name = "GetProduct")]

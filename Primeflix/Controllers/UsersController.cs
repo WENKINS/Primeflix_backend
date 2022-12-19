@@ -43,7 +43,10 @@ namespace Primeflix.Controllers
             var user = new User()
             {
                 Email = newUser.Email,
-                Password = newUser.Password
+                Password = newUser.Password,
+                Phone = newUser.Phone,
+                FirstName = newUser.FirstName,
+                LastName = newUser.LastName
             };
 
             if (!await _authentication.Register(user))

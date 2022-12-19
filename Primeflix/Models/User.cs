@@ -20,5 +20,6 @@ namespace Primeflix.Models
         public int LanguageId { get; set; }
 
         public Language Language { get; set; }
+        public Cart cart { get; set; }
     }
 }

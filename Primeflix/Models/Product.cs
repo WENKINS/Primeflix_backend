@@ -60,5 +60,7 @@ namespace Primeflix.Models
         public virtual ICollection<ProductGenre>? ProductGenre { get; set; }
 
         public virtual ICollection<ProductTranslation>? ProductsTranslations { get; set; }
+        public virtual ICollection<CartProduct>? CartProducts { get; set; }
+        public virtual ICollection<OrderDetails>? OrderDetails { get; set; }
     }   
 }
