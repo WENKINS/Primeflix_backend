@@ -1,4 +1,5 @@
-﻿using Primeflix.Models;
+﻿using Primeflix.DTO;
+using Primeflix.Models;
 
 namespace Primeflix.Services.ProductService
 {

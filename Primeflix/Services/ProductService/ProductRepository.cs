@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Primeflix.Data;
+using Primeflix.DTO;
 using Primeflix.Models;
 
 namespace Primeflix.Services.ProductService

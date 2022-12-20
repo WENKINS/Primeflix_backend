@@ -46,7 +46,7 @@ namespace Primeflix.Controllers
         [HttpGet(Name = "GetProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public async Task<IActionResult> GetProducts([FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genres = null)
+        public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genres = null)
         {
             List<int> genresId = new List<int>();
 
@@ -135,20 +135,33 @@ namespace Primeflix.Controllers
                 }
 
             }
-            return Ok(productsDto);
+
+            var pageResults = 10;
+            var pageCount = Math.Ceiling(((double)products.Count() / (double)pageResults));
+
+            var productsResults = productsDto.Skip((page - 1) * pageResults).Take((int)pageResults).ToList();
+
+            ProductsPageResultsDto productsPageResultsDto = new ProductsPageResultsDto()
+            {
+                Products = productsResults,
+                CurrentPage = page,
+                TotalPages = (int)pageCount
+            };
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            return Ok(productsPageResultsDto);
         }
 
-        //api/products/search
+        //api/products/search/params
         [AllowAnonymous]
         [HttpGet("search/{searchText}", Name = "SearchProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public async Task<IActionResult> SearchProducts(string searchText)
+        public async Task<IActionResult> SearchProducts(string searchText, [FromQuery] int page = 1)
         {
             var products = await _productRepository.SearchProducts(searchText);
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
 
             var productsDto = new List<ProductDto>();
 
@@ -209,7 +222,23 @@ namespace Primeflix.Controllers
                 }
 
             }
-            return Ok(productsDto);
+
+            var pageResults = 10;
+            var pageCount = Math.Ceiling(((double)products.Count() / (double)pageResults));
+
+            var productsResults = productsDto.Skip((page - 1) * pageResults).Take((int)pageResults).ToList();
+
+            ProductsPageResultsDto productsPageResultsDto = new ProductsPageResultsDto()
+            {
+                Products = productsResults,
+                CurrentPage = page,
+                TotalPages = (int)pageCount
+            };
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            return Ok(productsPageResultsDto);
         }
 
         //api/productId
