@@ -18,7 +18,7 @@ namespace Primeflix.Services.CelebrityService
 
         public async Task<bool> CelebrityExists(Celebrity celebrity)
         {
-            return _databaseContext.Celebrities.OrderBy(c => c.LastName)
+            return _databaseContext.Celebrities
                 .Where(c => c.FirstName.Trim().ToUpper() == celebrity.FirstName.Trim().ToUpper() && c.LastName.Trim().ToUpper() == celebrity.LastName.Trim().ToUpper())
                 .Any();
         }

@@ -252,6 +252,16 @@ namespace Primeflix.Services.ProductService
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
 
+        public async Task<ICollection<Product>> SearchProducts(string searchText)
+        {
+            return _databaseContext.ProductsTranslations
+                .Where(pt => pt.Title.ToLower().Contains(searchText.ToLower())
+                ||
+                pt.Summary.ToLower().Contains(searchText.ToLower())).Select(pt => pt.Product)
+                .Distinct()
+                .ToList();
+        }
+
         public async Task<bool> UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId)
         {
             var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();

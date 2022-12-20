@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.CelebrityService;
@@ -40,11 +41,12 @@ namespace Primeflix.Controllers
             _productTranslationRepository = productTranslationRepository;
         }
 
-        //api/products/languageCode/params
-        [HttpGet("{languageCode}", Name = "GetProducts")]
+        //api/products/params
+        [AllowAnonymous]
+        [HttpGet(Name = "GetProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public async Task<IActionResult> GetProducts(string languageCode, [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genres = null)
+        public async Task<IActionResult> GetProducts([FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genres = null)
         {
             List<int> genresId = new List<int>();
 
@@ -83,7 +85,7 @@ namespace Primeflix.Controllers
 
                 foreach (var genre in oGenres)
                 {
-                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
                     genresDto.Add(new GenreDto
                     {
                         Id = genre.Id,
@@ -98,7 +100,7 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
-                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, lang);
 
                 if (productTranslation != null)
                 {
@@ -136,12 +138,87 @@ namespace Primeflix.Controllers
             return Ok(productsDto);
         }
 
-        //api/products/productId
-        [HttpGet("{languageCode}/{productId}", Name = "GetProduct")]
+        //api/products/search
+        [AllowAnonymous]
+        [HttpGet("search/{searchText}", Name = "SearchProducts")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        public async Task<IActionResult> SearchProducts(string searchText)
+        {
+            var products = await _productRepository.SearchProducts(searchText);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var productsDto = new List<ProductDto>();
+
+            foreach (var product in products)
+            {
+                var oGenres = await _genreRepository.GetGenresOfAProduct(product.Id);
+                var genresDto = new List<GenreDto>();
+
+                foreach (var genre in oGenres)
+                {
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, "en");
+                    genresDto.Add(new GenreDto
+                    {
+                        Id = genre.Id,
+                        Name = genreTranslation.Translation
+                    });
+                }
+
+                var oFormat = await _formatRepository.GetFormatOfAProduct(product.Id);
+                var formatDto = new FormatDto()
+                {
+                    Id = oFormat.Id,
+                    Name = oFormat.Name
+                };
+
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, "en");
+
+                if (productTranslation != null)
+                {
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Title = productTranslation.Title,
+                        ReleaseDate = product.ReleaseDate,
+                        Stock = product.Stock,
+                        Rating = product.Rating,
+                        Format = formatDto,
+                        PictureUrl = product.PictureUrl,
+                        Price = product.Price,
+                        Genres = genresDto
+                    });
+                }
+
+                else
+                {
+                    productsDto.Add(new ProductDto
+                    {
+                        Id = product.Id,
+                        Title = product.Title,
+                        ReleaseDate = product.ReleaseDate,
+                        Stock = product.Stock,
+                        Rating = product.Rating,
+                        Format = formatDto,
+                        PictureUrl = product.PictureUrl,
+                        Price = product.Price,
+                        Genres = genresDto
+                    });
+                }
+
+            }
+            return Ok(productsDto);
+        }
+
+        //api/productId
+        [AllowAnonymous]
+        [HttpGet("{productId}", Name = "GetProduct")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public async Task<IActionResult> GetProduct(int productId, string languageCode)
+        public async Task<IActionResult> GetProduct(int productId, [FromQuery] string? lang = "en")
         {
             if (!await _productRepository.ProductExists(productId))
                 return NotFound();
@@ -182,7 +259,7 @@ namespace Primeflix.Controllers
 
             foreach (var genre in genres)
             {
-                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
                 genresDto.Add(new GenreDto
                 {
                     Id = genre.Id,
@@ -197,7 +274,7 @@ namespace Primeflix.Controllers
                 Name = oFormat.Name
             };
 
-            var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+            var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, lang);
 
             var productDto = new ProductDetailsDto()
             {
@@ -220,6 +297,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/genres/productId
+        [AllowAnonymous]
         [HttpGet("genres/{languageCode}/{productId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -249,6 +327,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
+        [Authorize]
         [HttpPost]
         [ProducesResponseType(201, Type = typeof(Product))]
         [ProducesResponseType(400)]
@@ -276,6 +355,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/productId?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
+        [Authorize]
         [HttpPut("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
@@ -308,6 +388,7 @@ namespace Primeflix.Controllers
         }
 
         //api/products/productId
+        [Authorize]
         [HttpDelete("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
