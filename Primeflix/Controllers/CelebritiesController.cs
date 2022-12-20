@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Primeflix.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
-using Primeflix.Services;
+using Primeflix.Services.CelebrityService;
 
 namespace Primeflix.Controllers
 {
@@ -27,9 +20,9 @@ namespace Primeflix.Controllers
         [HttpGet]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
-        public IActionResult GetCelebrities()
+        public async Task<IActionResult> GetCelebrities()
         {
-            var celebrities = _celebrityRepository.GetCelebrities();
+            var celebrities = await _celebrityRepository.GetCelebrities();
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -52,12 +45,12 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
-        public IActionResult GetCelebrity(int celebrityId)
+        public async Task<IActionResult> GetCelebrity(int celebrityId)
         {
-            if (!_celebrityRepository.CelebrityExists(celebrityId))
+            if (!await _celebrityRepository.CelebrityExists(celebrityId))
                 return NotFound();
 
-            var celebrity = _celebrityRepository.GetCelebrity(celebrityId);
+            var celebrity = await _celebrityRepository.GetCelebrity(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -78,16 +71,12 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult CreateCelebrity([FromBody] Celebrity celebrityToCreate)
+        public async Task<IActionResult> CreateCelebrity([FromBody] Celebrity celebrityToCreate)
         {
             if (celebrityToCreate == null)
                 return BadRequest(ModelState);
 
-            var celebrity = _celebrityRepository.GetCelebrities()
-                .Where(c => c.FirstName.Trim().ToUpper() == celebrityToCreate.FirstName.Trim().ToUpper() && c.LastName.Trim().ToUpper() == celebrityToCreate.LastName.Trim().ToUpper())
-                .FirstOrDefault();
-
-            if (celebrity != null)
+            if (await _celebrityRepository.CelebrityExists(celebrityToCreate))
             {
                 ModelState.AddModelError("", $"Celebrity {celebrityToCreate.FirstName} {celebrityToCreate.LastName} already exists");
                 return StatusCode(422, ModelState);
@@ -96,7 +85,7 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_celebrityRepository.CreateCelebrity(celebrityToCreate))
+            if (!await _celebrityRepository.CreateCelebrity(celebrityToCreate))
             {
                 ModelState.AddModelError("", $"Something went wrong saving {celebrityToCreate.FirstName} {celebrityToCreate.LastName}");
                 return StatusCode(500, ModelState);
@@ -112,7 +101,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult UpdateCelebrity(int celebrityId, [FromBody] Celebrity updatedCelebrity)
+        public async Task<IActionResult> UpdateCelebrity(int celebrityId, [FromBody] Celebrity updatedCelebrity)
         {
             if (updatedCelebrity == null)
                 return BadRequest(ModelState);
@@ -120,10 +109,10 @@ namespace Primeflix.Controllers
             if (celebrityId != updatedCelebrity.Id)
                 return BadRequest(ModelState);
 
-            if (!_celebrityRepository.CelebrityExists(celebrityId))
+            if (!await _celebrityRepository.CelebrityExists(celebrityId))
                 return NotFound();
 
-            bool test = _celebrityRepository.IsDuplicate(celebrityId, updatedCelebrity.FirstName, updatedCelebrity.LastName);
+            bool test = await _celebrityRepository.IsDuplicate(celebrityId, updatedCelebrity.FirstName, updatedCelebrity.LastName);
 
             if (test)
             {
@@ -134,7 +123,7 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_celebrityRepository.UpdateCelebrity(updatedCelebrity))
+            if (!await _celebrityRepository.UpdateCelebrity(updatedCelebrity))
             {
                 ModelState.AddModelError("", $"Something went wrong update {updatedCelebrity.FirstName} {updatedCelebrity.LastName}");
                 return StatusCode(500, ModelState);
@@ -151,17 +140,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(409)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public IActionResult DeleteCelebrity(int celebrityId)
+        public async Task<IActionResult> DeleteCelebrity(int celebrityId)
         {
-            if (!_celebrityRepository.CelebrityExists(celebrityId))
+            if (!await _celebrityRepository.CelebrityExists(celebrityId))
                 return NotFound();
 
-            var celebrityToDelete = _celebrityRepository.GetCelebrity(celebrityId);
+            var celebrityToDelete = await _celebrityRepository.GetCelebrity(celebrityId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_celebrityRepository.DeleteCelebrity(celebrityToDelete))
+            if (!await _celebrityRepository.DeleteCelebrity(celebrityToDelete))
             {
                 ModelState.AddModelError("", $"Something went wrong deleting {celebrityToDelete.FirstName} {celebrityToDelete.LastName}");
                 return StatusCode(500, ModelState);

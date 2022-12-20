@@ -1,7 +1,7 @@
 ﻿using Primeflix.Data;
 using Primeflix.Models;
 
-namespace Primeflix.Services
+namespace Primeflix.Services.LanguageService
 {
     public class LanguageRepository : ILanguageRepository
     {
@@ -12,51 +12,51 @@ namespace Primeflix.Services
             _databaseContext = databaseContext;
         }
 
-        public bool LanguageExists(int languageId)
+        public async Task<bool> LanguageExists(int languageId)
         {
             return _databaseContext.Languages.Any(l => l.Id == languageId);
         }
 
-        public ICollection<Language> GetLanguages()
+        public async Task<ICollection<Language>> GetLanguages()
         {
             return _databaseContext.Languages.OrderBy(l => l.Name).ToList();
         }
 
-        public Language GetLanguage(int languageId)
+        public async Task<Language> GetLanguage(int languageId)
         {
             return _databaseContext.Languages.Where(l => l.Id == languageId).FirstOrDefault();
         }
 
-        public Language GetLanguage(string languageCode)
+        public async Task<Language> GetLanguage(string languageCode)
         {
             return _databaseContext.Languages.Where(l => l.Code == languageCode).FirstOrDefault();
         }
 
-        public bool IsDuplicate(int languageId, string languageName)
+        public async Task<bool> IsDuplicate(int languageId, string languageName)
         {
             var language = _databaseContext.Languages.Where(l => l.Name.Trim().ToUpper() == languageName.Trim().ToUpper() && l.Id != languageId).FirstOrDefault();
             return language == null ? false : true;
         }
 
-        public bool CreateLanguage(Language language)
+        public async Task<bool> CreateLanguage(Language language)
         {
             _databaseContext.Add(language);
-            return Save();
+            return await Save();
         }
 
-        public bool UpdateLanguage(Language language)
+        public async Task<bool> UpdateLanguage(Language language)
         {
             _databaseContext.Update(language);
-            return Save();
+            return await Save();
         }
 
-        public bool DeleteLanguage(Language language)
+        public async Task<bool> DeleteLanguage(Language language)
         {
             _databaseContext.Remove(language);
-            return Save();
+            return await Save();
         }
 
-        public bool Save()
+        public async Task<bool> Save()
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
