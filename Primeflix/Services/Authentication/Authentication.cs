@@ -104,5 +104,21 @@ namespace Primeflix.Services.Authentication
 
             return tokenHandler.WriteToken(token);
         }
+
+        public async Task<string> DecodeToken(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token);
+            var tokens = jsonToken as JwtSecurityToken;
+            var claim = tokens.Claims.FirstOrDefault(c => c.Type == "nameid");
+
+            if (claim != null)
+            {
+                var id = claim.Value;
+                return id;
+            }
+
+            return "Could not decode JWT";
+        }
     }
 }

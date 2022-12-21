@@ -4,6 +4,6 @@
     {
         public int Id { get; set; }
         public UserWithoutPasswordDto User { get; set; }
-        public ICollection<ProductDto> Products { get; set; }
+        public ICollection<ProductLessDetailsDto> Products { get; set; }
     }
 }

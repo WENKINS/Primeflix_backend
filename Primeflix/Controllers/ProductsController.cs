@@ -46,15 +46,15 @@ namespace Primeflix.Controllers
         [HttpGet(Name = "GetProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genres = null)
+        public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genre = null)
         {
             List<int> genresId = new List<int>();
 
-            if (genres != null && genres.Count > 0)
+            if (genre != null && genre.Count > 0)
             {
-                foreach (var genre in genres)
+                foreach (var singleGenre in genre)
                 {
-                    genresId.Add(_genreRepository.GetGenre(genre).Id);
+                    genresId.Add((await _genreRepository.GetGenre(singleGenre)).Id);
                 }
             }
 
@@ -83,12 +83,12 @@ namespace Primeflix.Controllers
                 var oGenres = await _genreRepository.GetGenresOfAProduct(product.Id);
                 var genresDto = new List<GenreDto>();
 
-                foreach (var genre in oGenres)
+                foreach (var oGenre in oGenres)
                 {
-                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(oGenre.Id, lang);
                     genresDto.Add(new GenreDto
                     {
-                        Id = genre.Id,
+                        Id = oGenre.Id,
                         Name = genreTranslation.Translation
                     });
                 }
