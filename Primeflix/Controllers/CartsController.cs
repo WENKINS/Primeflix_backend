@@ -78,15 +78,10 @@ namespace Primeflix.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<CartDto>))]
         public async Task<IActionResult> GetCart()
         {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
+            var userId = await GetUserIdFromToken();
 
-            if(String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
+            if (userId == null || userId == 0)
                 return BadRequest();
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeToken(token));
 
             if (!await _cartRepository.CartOfAUserExists(userId))
                 return NotFound();
@@ -131,29 +126,35 @@ namespace Primeflix.Controllers
         }
 
         //api/products?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
-        /*[HttpPost]
+        [HttpPost]
         [ProducesResponseType(201, Type = typeof(Cart))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> AddToCart([FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToCreate)
+        public async Task<IActionResult> AddToCart([FromBody] IEnumerable<CartProductDto> products)
         {
-            productToCreate.Format = await _formatRepository.GetFormat(productToCreate.Format.Id);
+            if (products == null)
+                return BadRequest();
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var userId = await GetUserIdFromToken();
 
-            if (!await _productRepository.CreateProduct(productToCreate, dirId, actId, genresId))
+            if (userId == null || userId == 0)
+                return BadRequest();
+
+            foreach (var product in products)
             {
-                ModelState.AddModelError("", $"Something went wrong saving the product {productToCreate.Title}");
-                return StatusCode(500, ModelState);
+                if (!await _cartRepository.AddProductToCart(userId, product.ProductId, product.Quantity))
+            {
+                    ModelState.AddModelError("", $"Something went wrong adding product to cart");
+                    return StatusCode(500, ModelState);
+                }
             }
 
-            return CreatedAtRoute("GetProduct", new { productId = productToCreate.Id }, productToCreate);
+            return await GetCart();
         }
 
         //api/products/productId?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
-        [HttpPut("{productId}")]
+        /*[HttpPut("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -209,6 +210,21 @@ namespace Primeflix.Controllers
             }
 
             return NoContent();
+        }
+
+        public async Task<int> GetUserIdFromToken()
+        {
+            string bearerToken = HttpContext.Request.Headers["Authorization"];
+
+            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            {
+                return 0;
+            }
+
+            string token = bearerToken.Substring("Bearer ".Length);
+            int userId = Int32.Parse(await _authentication.DecodeToken(token));
+
+            return userId;
         }
     }
 }
