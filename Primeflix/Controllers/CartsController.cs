@@ -125,13 +125,13 @@ namespace Primeflix.Controllers
             return Ok(cartDto);
         }
 
-        //api/products?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
+        //api/carts
         [HttpPost]
         [ProducesResponseType(201, Type = typeof(Cart))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> AddToCart([FromBody] IEnumerable<CartProductDto> products)
+        public async Task<IActionResult> UpdateCart([FromBody] IEnumerable<CartProductDto> products)
         {
             if (products == null)
                 return BadRequest();
@@ -153,52 +153,25 @@ namespace Primeflix.Controllers
             return await GetCart();
         }
 
-        //api/products/productId?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
-        /*[HttpPut("{productId}")]
-        [ProducesResponseType(204)] // no content
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(422)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> UpdateCart(int productId, [FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToUpdate)
-        {
-
-            var statusCode = await ValidateProduct(dirId, actId, genresId, productToUpdate);
-
-            if (productId != productToUpdate.Id)
-                return BadRequest();
-
-            if (!await _productRepository.ProductExists(productId))
-                return NotFound();
-
-            productToUpdate.Format = await _formatRepository.GetFormat(productToUpdate.Format.Id);
-
-            if (!ModelState.IsValid)
-                return StatusCode(statusCode.StatusCode);
-
-            if (!await _productRepository.UpdateProduct(productToUpdate, dirId, actId, genresId))
-            {
-                ModelState.AddModelError("", $"Something went wrong updating the product {productToUpdate.Title}");
-                return StatusCode(500, ModelState);
-            }
-
-            return NoContent();
-        }*/
-
-        //api/carts/cartId
-        [HttpDelete("{cartId}")]
+        //api/carts
+        [HttpDelete()]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> DeleteCart(int cartId)
+        public async Task<IActionResult> DeleteCart()
         {
-            if (!await _cartRepository.CartExists(cartId))
+            var userId = await GetUserIdFromToken();
+
+            if (userId == null || userId == 0)
+                return BadRequest();
+
+            if (!await _cartRepository.CartOfAUserExists(userId))
                 return NotFound();
 
-            var cartToDelete = await _cartRepository.GetCart(cartId);
+            var cartToDelete = await _cartRepository.GetCartOfAUser(userId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
