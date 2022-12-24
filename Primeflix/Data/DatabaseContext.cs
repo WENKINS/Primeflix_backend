@@ -61,5 +61,6 @@ namespace Primeflix.Data
         public virtual DbSet<CartProduct> CartProducts { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderDetails> OrderDetails { get; set; }
+        public virtual DbSet<Role> Roles { get; set; }
     }
 }

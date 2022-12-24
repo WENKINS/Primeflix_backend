@@ -13,6 +13,7 @@ namespace Primeflix.Services.Authentication
         Task<User> GetUser(string email);
         Task<User> GetUser(int userId);
         Task<bool> Save();
-        Task<string> DecodeToken(string token);
+        Task<string> DecodeTokenForId(string token);
+        Task<string?> DecodeTokenForRole(string token);
     }
 }

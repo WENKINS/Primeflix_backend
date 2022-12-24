@@ -16,15 +16,6 @@ namespace Primeflix.Services.CartService
             var product = _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
             var user = _databaseContext.Users.Where(u => u.Id == userId).FirstOrDefault();
 
-            if(!await CartOfAUserExists(userId))
-            {
-                var newCart = new Cart()
-                {
-                    User = user
-                };
-                _databaseContext.Add(newCart);
-            }
-
             var cart = await GetCartOfAUser(userId);
 
             var cartProduct = new CartProduct()
@@ -45,6 +36,17 @@ namespace Primeflix.Services.CartService
         public async Task<bool> CartOfAUserExists(int userId)
         {
             return _databaseContext.Carts.Any(c => c.UserId == userId);
+        }
+
+        public async Task<bool> CreateCart(int userId)
+        {
+            var user = _databaseContext.Users.Where(u => u.Id == userId).FirstOrDefault();
+            var newCart = new Cart()
+            {
+                User = user
+            };
+            _databaseContext.Add(newCart);
+            return await Save();
         }
 
         public async Task<bool> DeleteCart(Cart cart)

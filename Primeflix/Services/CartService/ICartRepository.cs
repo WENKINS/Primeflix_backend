@@ -10,6 +10,7 @@ namespace Primeflix.Services.CartService
         Task<ICollection<Product>> GetProductsOfACart(int cartId);
         Task<bool> CartExists(int cartId);
         Task<bool> CartOfAUserExists(int userId);
+        Task<bool> CreateCart(int userId);
         Task<bool> AddProductToCart(int userId, int productId, int quantity);
         Task<bool> UpdateCart(int userId, int productId, int quantity);
         Task<bool> DeleteCart(Cart cart);

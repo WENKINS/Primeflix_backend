@@ -13,6 +13,7 @@ using Primeflix.Services.GenreTranslationService;
 using Primeflix.Services.LanguageService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
+using Primeflix.Services.RoleService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IGenreTranslationRepository, GenreTranslationReposito
 builder.Services.AddScoped<IProductTranslationRepository, ProductTranslationRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IAuthentication, Authentication>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,

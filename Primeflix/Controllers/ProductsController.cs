@@ -46,7 +46,7 @@ namespace Primeflix.Controllers
         [HttpGet(Name = "GetProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genre = null)
+        public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genre = null)
         {
             List<int> genresId = new List<int>();
 
@@ -136,10 +136,14 @@ namespace Primeflix.Controllers
 
             }
 
-            var pageResults = 10;
-            var pageCount = Math.Ceiling(((double)products.Count() / (double)pageResults));
+            var pageCount = Math.Ceiling(((double)products.Count() / (double)pageSize));
 
-            var productsResults = productsDto.Skip((page - 1) * pageResults).Take((int)pageResults).ToList();
+            if(page > pageCount)
+            {
+                page = (int)pageCount;
+            }
+
+            var productsResults = productsDto.Skip((page - 1) * pageSize).Take((int)pageSize).ToList();
 
             ProductsPageResultsDto productsPageResultsDto = new ProductsPageResultsDto()
             {
@@ -159,7 +163,7 @@ namespace Primeflix.Controllers
         [HttpGet("search/{searchText}", Name = "SearchProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public async Task<IActionResult> SearchProducts(string searchText, [FromQuery] int page = 1)
+        public async Task<IActionResult> SearchProducts(string searchText, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var products = await _productRepository.SearchProducts(searchText);
 
@@ -223,10 +227,14 @@ namespace Primeflix.Controllers
 
             }
 
-            var pageResults = 10;
-            var pageCount = Math.Ceiling(((double)products.Count() / (double)pageResults));
+            var pageCount = Math.Ceiling(((double)products.Count() / (double)pageSize));
 
-            var productsResults = productsDto.Skip((page - 1) * pageResults).Take((int)pageResults).ToList();
+            if (page > pageCount)
+            {
+                page = (int)pageCount;
+            }
+
+            var productsResults = productsDto.Skip((page - 1) * pageSize).Take((int)pageSize).ToList();
 
             ProductsPageResultsDto productsPageResultsDto = new ProductsPageResultsDto()
             {

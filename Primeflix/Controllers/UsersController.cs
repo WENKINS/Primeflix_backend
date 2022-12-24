@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.Authentication;
+using Primeflix.Services.CartService;
 using Primeflix.Services.LanguageService;
 
 namespace Primeflix.Controllers
@@ -14,10 +15,13 @@ namespace Primeflix.Controllers
     {
         private IAuthentication _authentication;
         private ILanguageRepository _languageRepository;
-        public UsersController(IAuthentication authentication, ILanguageRepository languageRepository)
+        private ICartRepository _cartRepository;
+
+        public UsersController(IAuthentication authentication, ILanguageRepository languageRepository, ICartRepository cartRepository)
         {
             _authentication = authentication;
             _languageRepository = languageRepository;
+            _cartRepository = cartRepository;
         }
 
         //api/users/register
@@ -52,6 +56,14 @@ namespace Primeflix.Controllers
             if (!await _authentication.Register(user))
             {
                 ModelState.AddModelError("", $"Something went wrong saving user with address {newUser.Email}");
+                return StatusCode(500, ModelState);
+            }
+
+            var userId = (await _authentication.GetUser(user.Email)).Id;
+
+            if(!await _cartRepository.CreateCart(userId))
+            {
+                ModelState.AddModelError("", $"Something went wrong creating user's cart");
                 return StatusCode(500, ModelState);
             }
 

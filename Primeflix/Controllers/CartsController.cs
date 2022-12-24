@@ -23,21 +23,78 @@ namespace Primeflix.Controllers
         }
 
         //api/carts
-        [HttpGet("all", Name = "GetCarts")]
+        [HttpGet(Name = "GetCart")]
         [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CartDto>))]
-        public async Task<IActionResult> GetCarts()
+        public async Task<IActionResult> GetCart()
         {
-            var carts = await _cartRepository.GetCarts();
+            var userRole = await GetUserRoleFromToken();
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (userRole == null)
+                return BadRequest();
 
-            var cartsDto = new List<CartDto>();
-
-            foreach (var cart in carts)
+            if (userRole.Equals("admin"))
             {
-                var user = await _authentication.GetUser(cart.UserId);
+                var carts = await _cartRepository.GetCarts();
+
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var cartsDto = new List<CartDto>();
+
+                foreach (var cart in carts)
+                {
+                    var user = await _authentication.GetUser(cart.UserId);
+
+                    var userDto = new UserWithoutPasswordDto()
+                    {
+                        Id = user.Id,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Phone = user.Phone,
+                        Email = user.Email,
+                    };
+
+                    var products = await _cartRepository.GetProductsOfACart(cart.Id);
+                    var productsDto = new List<ProductLessDetailsDto>();
+
+                    foreach (var product in products)
+                    {
+                        productsDto.Add(new ProductLessDetailsDto
+                        {
+                            Id = product.Id,
+                            Title = product.Title,
+                            Price = product.Price,
+                        });
+                    }
+
+                    cartsDto.Add(new CartDto
+                    {
+                        Id = cart.Id,
+                        User = userDto,
+                        Products = productsDto
+                    });
+                }
+                return Ok(cartsDto);
+            }
+
+            else
+            {
+                var userId = await GetUserIdFromToken();
+
+                if (userId == null || userId == 0)
+                    return BadRequest();
+
+                if (!await _cartRepository.CartOfAUserExists(userId))
+                    return NotFound();
+
+                var cart = await _cartRepository.GetCartOfAUser(userId);
+
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var user = await _authentication.GetUser(userId);
 
                 var userDto = new UserWithoutPasswordDto()
                 {
@@ -51,7 +108,7 @@ namespace Primeflix.Controllers
                 var products = await _cartRepository.GetProductsOfACart(cart.Id);
                 var productsDto = new List<ProductLessDetailsDto>();
 
-                foreach(var product in products)
+                foreach (var product in products)
                 {
                     productsDto.Add(new ProductLessDetailsDto
                     {
@@ -61,68 +118,15 @@ namespace Primeflix.Controllers
                     });
                 }
 
-                cartsDto.Add(new CartDto
+                var cartDto = new CartDto()
                 {
                     Id = cart.Id,
                     User = userDto,
                     Products = productsDto
-                });
+                };
+
+                return Ok(cartDto);
             }
-            return Ok(cartsDto);
-        }
-
-        //api/carts
-        [HttpGet(Name = "GetCart")]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<CartDto>))]
-        public async Task<IActionResult> GetCart()
-        {
-            var userId = await GetUserIdFromToken();
-
-            if (userId == null || userId == 0)
-                return BadRequest();
-
-            if (!await _cartRepository.CartOfAUserExists(userId))
-                return NotFound();
-
-            var cart = await _cartRepository.GetCartOfAUser(userId);
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var user = await _authentication.GetUser(userId);
-
-            var userDto = new UserWithoutPasswordDto()
-            {
-                Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Phone = user.Phone,
-                Email = user.Email,
-            };
-
-            var products = await _cartRepository.GetProductsOfACart(cart.Id);
-            var productsDto = new List<ProductLessDetailsDto>();
-
-            foreach (var product in products)
-            {
-                productsDto.Add(new ProductLessDetailsDto
-                {
-                    Id = product.Id,
-                    Title = product.Title,
-                    Price = product.Price,
-                });
-            }
-
-            var cartDto = new CartDto()
-            {
-                Id = cart.Id,
-                User = userDto,
-                Products = productsDto
-            };
-
-            return Ok(cartDto);
         }
 
         //api/carts
@@ -144,7 +148,7 @@ namespace Primeflix.Controllers
             foreach (var product in products)
             {
                 if (!await _cartRepository.AddProductToCart(userId, product.ProductId, product.Quantity))
-            {
+                {
                     ModelState.AddModelError("", $"Something went wrong adding product to cart");
                     return StatusCode(500, ModelState);
                 }
@@ -195,9 +199,24 @@ namespace Primeflix.Controllers
             }
 
             string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeToken(token));
+            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
 
             return userId;
+        }
+
+        public async Task<string> GetUserRoleFromToken()
+        {
+            string bearerToken = HttpContext.Request.Headers["Authorization"];
+
+            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            {
+                return null;
+            }
+
+            string token = bearerToken.Substring("Bearer ".Length);
+            string role = await _authentication.DecodeTokenForRole(token);
+
+            return role;
         }
     }
 }
