@@ -13,6 +13,7 @@ namespace Primeflix.Services.CartService
 
         public async Task<bool> AddProductToCart(int userId, int productId, int quantity)
         {
+
             var product = _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
             var user = _databaseContext.Users.Where(u => u.Id == userId).FirstOrDefault();
 
@@ -21,9 +22,24 @@ namespace Primeflix.Services.CartService
             var cartProduct = new CartProduct()
             {
                 Cart = cart,
-                Product = product
+                Product = product,
+                Quantity = quantity
             };
             _databaseContext.Add(cartProduct);
+
+            return await Save();
+        }
+
+        public async Task<bool> EmptyCart(int userId)
+        {
+            var cart = await GetCartOfAUser(userId);
+
+            var cartProducts = _databaseContext.CartProducts.Where(cp => cp.CartId == cart.Id).ToList();
+
+            foreach(var cartProduct in cartProducts)
+            {
+                _databaseContext.Remove(cartProduct);
+            }
 
             return await Save();
         }
@@ -70,19 +86,14 @@ namespace Primeflix.Services.CartService
             return _databaseContext.Carts.ToList();
         }
 
-        public async Task<ICollection<Product>> GetProductsOfACart(int cartId)
+        public async Task<ICollection<CartProduct>> GetProductsOfACart(int cartId)
         {
-            return _databaseContext.CartProducts.Where(cp => cp.CartId == cartId).Select(cp => cp.Product).ToList();
+            return _databaseContext.CartProducts.Where(cp => cp.CartId == cartId).ToList();
         }
 
         public async Task<bool> Save()
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
-        }
-
-        public async Task<bool> UpdateCart(int userId, int productId, int quantity)
-        {
-            throw new NotImplementedException();
         }
     }
 }

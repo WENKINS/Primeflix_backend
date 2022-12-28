@@ -57,15 +57,18 @@ namespace Primeflix.Controllers
                     };
 
                     var products = await _cartRepository.GetProductsOfACart(cart.Id);
-                    var productsDto = new List<ProductLessDetailsDto>();
+                    var productsDto = new List<CartProductWithTitleDto>();
 
                     foreach (var product in products)
                     {
-                        productsDto.Add(new ProductLessDetailsDto
+                        var productInfo = await _productRepository.GetProduct(product.ProductId);
+
+                        productsDto.Add(new CartProductWithTitleDto
                         {
-                            Id = product.Id,
-                            Title = product.Title,
-                            Price = product.Price,
+                            Id = productInfo.Id,
+                            Title = productInfo.Title,
+                            Price = productInfo.Price,
+                            Quantity = product.Quantity
                         });
                     }
 
@@ -106,15 +109,18 @@ namespace Primeflix.Controllers
                 };
 
                 var products = await _cartRepository.GetProductsOfACart(cart.Id);
-                var productsDto = new List<ProductLessDetailsDto>();
+                var productsDto = new List<CartProductWithTitleDto>();
 
                 foreach (var product in products)
                 {
-                    productsDto.Add(new ProductLessDetailsDto
+                    var productInfo = await _productRepository.GetProduct(product.ProductId);
+
+                    productsDto.Add(new CartProductWithTitleDto
                     {
-                        Id = product.Id,
-                        Title = product.Title,
-                        Price = product.Price,
+                        Id = productInfo.Id,
+                        Title = productInfo.Title,
+                        Price = productInfo.Price,
+                        Quantity = product.Quantity
                     });
                 }
 
@@ -144,6 +150,12 @@ namespace Primeflix.Controllers
 
             if (userId == null || userId == 0)
                 return BadRequest();
+
+            if(!(await _cartRepository.EmptyCart(userId)))
+            {
+                ModelState.AddModelError("", $"Something went wrong adding product to cart");
+                return StatusCode(500, ModelState);
+            }
 
             foreach (var product in products)
             {
