@@ -40,7 +40,10 @@ namespace Primeflix.Services.GenreService
 
         public async Task<Genre> GetGenre(string genreName)
         {
-            return _databaseContext.Genres.Where(g => g.Name == genreName).FirstOrDefault();
+            return _databaseContext.GenresTranslations
+                .Where(gt => gt.Translation.Equals(genreName))
+                .Select(gt => gt.Genre)
+                .FirstOrDefault();
         }
 
         public async Task<bool> IsDuplicate(int genreId, string genreName)

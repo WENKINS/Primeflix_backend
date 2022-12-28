@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using MySql.EntityFrameworkCore.Extensions;
 using Primeflix.Data;
 using Primeflix.Services.Authentication;
+using Primeflix.Services.CartService;
 using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FormatService;
 using Primeflix.Services.GenreService;
@@ -12,6 +13,7 @@ using Primeflix.Services.GenreTranslationService;
 using Primeflix.Services.LanguageService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
+using Primeflix.Services.RoleService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +36,9 @@ builder.Services.AddScoped<IFormatRepository, FormatRepository>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 builder.Services.AddScoped<IGenreTranslationRepository, GenreTranslationRepository>();
 builder.Services.AddScoped<IProductTranslationRepository, ProductTranslationRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IAuthentication, Authentication>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,

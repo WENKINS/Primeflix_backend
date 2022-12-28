@@ -21,5 +21,8 @@ namespace Primeflix.Models
 
         public Language Language { get; set; }
         public Cart cart { get; set; }
+        [Column("role_id")]
+        public int RoleId { get; set; }
+        public Role Role { get; set; }
     }
 }
