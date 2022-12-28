@@ -5,7 +5,7 @@ namespace Primeflix.Services.Authentication
 {
     public interface IAuthentication
     {
-        Task<bool> Register(User user);
+        Task<bool> Register(User user, string password);
         Task<string> Login(string email, string password);
         Task<bool> UserExists(string email);
         Task<bool> UserExists(int userId);

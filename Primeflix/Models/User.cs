@@ -15,7 +15,10 @@ namespace Primeflix.Models
         public string? LastName { get; set; }
         public string? Phone { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        [Column("password_hash")]
+        public byte[] PasswordHash { get; set; }
+        [Column("password_salt")]
+        public byte[] PasswordSalt { get; set; }
         [Column("language_id")]
         public int LanguageId { get; set; }
 

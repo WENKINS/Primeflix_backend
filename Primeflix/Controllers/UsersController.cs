@@ -47,13 +47,12 @@ namespace Primeflix.Controllers
             var user = new User()
             {
                 Email = newUser.Email,
-                Password = newUser.Password,
                 Phone = newUser.Phone,
                 FirstName = newUser.FirstName,
                 LastName = newUser.LastName
             };
 
-            if (!await _authentication.Register(user))
+            if (!await _authentication.Register(user, newUser.Password))
             {
                 ModelState.AddModelError("", $"Something went wrong saving user with address {newUser.Email}");
                 return StatusCode(500, ModelState);
@@ -125,7 +124,6 @@ namespace Primeflix.Controllers
                     LastName = user.LastName,
                     Phone = user.Phone,
                     Email = user.Email,
-                    Password = user.Password,
                     Language = languageDto
                 });
             }
@@ -161,7 +159,6 @@ namespace Primeflix.Controllers
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                Password = user.Password,
                 Language = languageDto
             };
 

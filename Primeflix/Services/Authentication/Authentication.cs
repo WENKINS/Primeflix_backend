@@ -31,20 +31,26 @@ namespace Primeflix.Services.Authentication
                 return "User not found"; // SECURITY RISK!
             }
 
-            if(user.Password == password)
+            if(!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
             {
-                return await CreateToken(user);
+                return "Wrong password";
             }
 
-            return "Wrong password";
+            return await CreateToken(user);
         }
 
-        public async Task<bool> Register(User user)
+        public async Task<bool> Register(User user, string password)
         {
+            CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+
             if(user.Language == null)
             {
                 user.Language = _databaseContext.Languages.Where(l => l.Name == "English").FirstOrDefault();
             }
+
             _databaseContext.Users.Add(user);
             return await Save();
         }
@@ -145,6 +151,25 @@ namespace Primeflix.Services.Authentication
             }
 
             return "Could not decode JWT";
+        }
+
+        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        {
+            using (var hmac = new System.Security.Cryptography.HMACSHA512())
+            {
+                passwordSalt = hmac.Key;
+                passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+            }
+        }
+
+        private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
+        {
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt))
+            {
+                var computeHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+                return computeHash.SequenceEqual(passwordHash);
+            }
         }
     }
 }
