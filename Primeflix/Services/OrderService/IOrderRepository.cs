@@ -2,8 +2,9 @@
 
 namespace Primeflix.Services.OrderService
 {
-    public interface IOrderService
+    public interface IOrderRepository
     {
+        Task<bool> PlaceOrder(int cartId);
         Task<ICollection<Order>> GetOrders();
         Task<Order> GetOrder(int orderId);
         Task<ICollection<Order>> GetOrdersOfAUser(int userId);
