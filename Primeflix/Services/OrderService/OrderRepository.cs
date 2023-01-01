@@ -15,39 +15,41 @@ namespace Primeflix.Services.OrderService
             _cartRepository = cartRepository;
         }
 
-        public async Task<bool> DeleteCart(Order order)
+        public async Task<bool> DeleteOrder(Order order)
         {
-            throw new NotImplementedException();
+            _databaseContext.Remove(order);
+            return await Save();
         }
 
         public async Task<Order> GetOrder(int orderId)
         {
-            throw new NotImplementedException();
+            return _databaseContext.Orders.Where(o => o.Id == orderId).FirstOrDefault();
+        }
+
+        public async Task<ICollection<OrderDetails>> GetOrderDetails(int orderId)
+        {
+            return _databaseContext.OrderDetails.Where(od => od.OrderId == orderId).ToList();
         }
 
         public async Task<ICollection<Order>> GetOrders()
         {
-            throw new NotImplementedException();
+            return _databaseContext.Orders.ToList();
         }
 
         public async Task<ICollection<Order>> GetOrdersOfAUser(int userId)
         {
-            throw new NotImplementedException();
+            return _databaseContext.Orders.Where(o => o.UserId == userId).ToList();
         }
 
         public async Task<bool> IsDuplicate(int orderId, int userId)
         {
-            throw new NotImplementedException();
+            var order = _databaseContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).Any();
+            return order;
         }
 
         public async Task<bool> OrderExists(int orderId)
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task<bool> OrderProducts(int cartId)
-        {
-            throw new NotImplementedException();
+            return _databaseContext.Orders.Where(o => o.Id == orderId).Any();
         }
 
         public async Task<bool> PlaceOrder(int cartId)
