@@ -65,5 +65,10 @@ namespace Primeflix.Services.LanguageService
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
+
+        public async Task<bool> LanguageExists(string languageCode)
+        {
+            return _databaseContext.Languages.Any(l => l.Code.Equals(languageCode));
+        }
     }
 }

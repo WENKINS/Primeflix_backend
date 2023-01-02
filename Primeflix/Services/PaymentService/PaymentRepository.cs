@@ -57,6 +57,11 @@ namespace Primeflix.Services.PaymentService
             var options = new SessionCreateOptions
             {
                 CustomerEmail = user.Email,
+                ShippingAddressCollection =
+                    new SessionShippingAddressCollectionOptions
+                    {
+                        AllowedCountries = new List<string> { "BE" }
+                    },
                 PaymentMethodTypes = new List<string>
                 {
                     "card"

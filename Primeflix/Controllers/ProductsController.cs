@@ -6,6 +6,7 @@ using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FormatService;
 using Primeflix.Services.GenreService;
 using Primeflix.Services.GenreTranslationService;
+using Primeflix.Services.LanguageService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
 
@@ -23,6 +24,7 @@ namespace Primeflix.Controllers
         private IFormatRepository _formatRepository;
         private IGenreTranslationRepository _genreTranslationRepository;
         private IProductTranslationRepository _productTranslationRepository;
+        private ILanguageRepository _languageRepository;
 
         public ProductsController(
             IProductRepository productRepository,
@@ -30,7 +32,8 @@ namespace Primeflix.Controllers
             ICelebrityRepository celebrityRepository,
             IFormatRepository formatRepository,
             IGenreTranslationRepository genreTranslationRepository,
-            IProductTranslationRepository productTranslationRepository
+            IProductTranslationRepository productTranslationRepository,
+            ILanguageRepository languageRepository
             )
         {
             _productRepository = productRepository;
@@ -39,6 +42,7 @@ namespace Primeflix.Controllers
             _formatRepository = formatRepository;
             _genreTranslationRepository = genreTranslationRepository;
             _productTranslationRepository = productTranslationRepository;
+            _languageRepository = languageRepository;
         }
 
         //api/products/params
@@ -48,12 +52,32 @@ namespace Primeflix.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
         public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genre = null)
         {
+            if (pageSize <= 0)
+                return BadRequest();
+
+            if(!(await _languageRepository.LanguageExists(lang)))
+            {
+                ModelState.AddModelError("", $"Language doesn't exist");
+                return StatusCode(500, ModelState);
+            }
+
+            if(!(await _formatRepository.FormatExists(format)) && !format.Equals("All"))
+            {
+                ModelState.AddModelError("", $"Format doesn't exist");
+                return StatusCode(500, ModelState);
+            }
+
             List<int> genresId = new List<int>();
 
             if (genre != null && genre.Count > 0)
             {
                 foreach (var singleGenre in genre)
                 {
+                    if(!(await _genreRepository.GenreExists(singleGenre)))
+                    {
+                        ModelState.AddModelError("", $"Genre doesn't exist");
+                        return StatusCode(500, ModelState);
+                    }
                     genresId.Add((await _genreRepository.GetGenre(singleGenre)).Id);
                 }
             }

@@ -84,5 +84,12 @@ namespace Primeflix.Services.GenreService
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
+
+        public async Task<bool> GenreExists(string genreName)
+        {
+            return _databaseContext.Genres
+            .Where(g => g.Name.Trim().ToUpper() == genreName)
+            .Any();
+        }
     }
 }

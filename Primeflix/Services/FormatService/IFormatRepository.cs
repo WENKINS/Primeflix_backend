@@ -10,6 +10,7 @@ namespace Primeflix.Services.FormatService
         Task<Format> GetFormatOfAProduct(int productId);
         Task<ICollection<Product>> GetProductsOfAFormat(int formatId);
         Task<bool> FormatExists(int formatId);
+        Task<bool> FormatExists(string formatName);
         Task<bool> IsDuplicate(int formatId, string formatName);
         Task<bool> CreateFormat(Format format);
         Task<bool> UpdateFormat(Format format);

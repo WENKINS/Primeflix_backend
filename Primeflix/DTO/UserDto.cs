@@ -8,5 +8,6 @@
         public string Phone { get; set; }
         public string Email { get; set; }
         public LanguageDto Language { get; set; }
+        public RoleDto Role { get; set; }
     }
 }

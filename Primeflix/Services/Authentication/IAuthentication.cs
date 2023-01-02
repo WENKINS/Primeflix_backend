@@ -12,6 +12,8 @@ namespace Primeflix.Services.Authentication
         Task<IEnumerable<User>> GetUsers();
         Task<User> GetUser(string email);
         Task<User> GetUser(int userId);
+        Task<bool> UpdateUser(User user);
+        Task<bool> DeleteUser(User user);
         Task<bool> Save();
         Task<string> DecodeTokenForId(string token);
         Task<string?> DecodeTokenForRole(string token);

@@ -11,6 +11,7 @@ namespace Primeflix.Services.GenreService
         Task<ICollection<Product>> GetProductsOfAGenre(int genreId);
         Task<bool> GenreExists(int genreId);
         Task<bool> GenreExists(Genre genre);
+        Task<bool> GenreExists(string genreName);
         Task<bool> IsDuplicate(int genreId, string genreName);
 
         Task<bool> CreateGenre(Genre genre);

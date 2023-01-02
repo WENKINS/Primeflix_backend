@@ -29,6 +29,11 @@ namespace Primeflix.Services.FormatService
             return _databaseContext.Formats.Any(f => f.Id == formatId);
         }
 
+        public async Task<bool> FormatExists(string formatName)
+        {
+            return _databaseContext.Formats.Any(f => f.Name.Equals(formatName));
+        }
+
         public async Task<Format> GetFormat(int formatId)
         {
             return _databaseContext.Formats.Where(f => f.Id == formatId).FirstOrDefault();

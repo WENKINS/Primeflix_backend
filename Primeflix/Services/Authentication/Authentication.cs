@@ -33,7 +33,7 @@ namespace Primeflix.Services.Authentication
 
             if(!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
             {
-                return "Wrong password";
+                return null;
             }
 
             return await CreateToken(user);
@@ -170,6 +170,18 @@ namespace Primeflix.Services.Authentication
                 var computeHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
                 return computeHash.SequenceEqual(passwordHash);
             }
+        }
+
+        public async Task<bool> UpdateUser(User user)
+        {
+            _databaseContext.Update(user);
+            return await Save();
+        }
+
+        public async Task<bool> DeleteUser(User user)
+        {
+            _databaseContext.Remove(user);
+            return await Save();
         }
     }
 }
