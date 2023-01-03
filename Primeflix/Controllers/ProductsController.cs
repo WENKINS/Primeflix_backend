@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
+using Primeflix.Services.Authentication;
 using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FormatService;
 using Primeflix.Services.GenreService;
@@ -25,6 +26,7 @@ namespace Primeflix.Controllers
         private IGenreTranslationRepository _genreTranslationRepository;
         private IProductTranslationRepository _productTranslationRepository;
         private ILanguageRepository _languageRepository;
+        private IAuthentication _authentication;
 
         public ProductsController(
             IProductRepository productRepository,
@@ -33,7 +35,8 @@ namespace Primeflix.Controllers
             IFormatRepository formatRepository,
             IGenreTranslationRepository genreTranslationRepository,
             IProductTranslationRepository productTranslationRepository,
-            ILanguageRepository languageRepository
+            ILanguageRepository languageRepository,
+            IAuthentication authentication
             )
         {
             _productRepository = productRepository;
@@ -43,6 +46,7 @@ namespace Primeflix.Controllers
             _genreTranslationRepository = genreTranslationRepository;
             _productTranslationRepository = productTranslationRepository;
             _languageRepository = languageRepository;
+            _authentication = authentication;
         }
 
         //api/products/params
@@ -53,6 +57,9 @@ namespace Primeflix.Controllers
         public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genre = null)
         {
             if (pageSize <= 0)
+                return BadRequest();
+
+            if (page < 1)
                 return BadRequest();
 
             if(!(await _languageRepository.LanguageExists(lang)))
@@ -187,8 +194,20 @@ namespace Primeflix.Controllers
         [HttpGet("search/{searchText}", Name = "SearchProducts")]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
-        public async Task<IActionResult> SearchProducts(string searchText, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<IActionResult> SearchProducts(string searchText, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? lang = "en")
         {
+            if (page < 1)
+                return BadRequest();
+
+            if (pageSize <= 0)
+                return BadRequest();
+
+            if (!(await _languageRepository.LanguageExists(lang)))
+            {
+                ModelState.AddModelError("", $"Language doesn't exist");
+                return StatusCode(500, ModelState);
+            }
+
             var products = await _productRepository.SearchProducts(searchText);
 
             var productsDto = new List<ProductDto>();
@@ -200,7 +219,7 @@ namespace Primeflix.Controllers
 
                 foreach (var genre in oGenres)
                 {
-                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, "en");
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
                     genresDto.Add(new GenreDto
                     {
                         Id = genre.Id,
@@ -215,7 +234,7 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
-                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, "en");
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, lang);
 
                 if (productTranslation != null)
                 {
@@ -281,6 +300,12 @@ namespace Primeflix.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
         public async Task<IActionResult> GetProduct(int productId, [FromQuery] string? lang = "en")
         {
+            if (!(await _languageRepository.LanguageExists(lang)))
+            {
+                ModelState.AddModelError("", $"Language doesn't exist");
+                return StatusCode(500, ModelState);
+            }
+
             if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
@@ -357,14 +382,20 @@ namespace Primeflix.Controllers
             return Ok(productDto);
         }
 
-        //api/products/genres/productId
+        //api/products/genres/productId?lang
         [AllowAnonymous]
-        [HttpGet("genres/{languageCode}/{productId}")]
+        [HttpGet("genres/{productId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public async Task<IActionResult> GetGenresOfAProduct(int productId, string languageCode)
+        public async Task<IActionResult> GetGenresOfAProduct(int productId, [FromQuery] string? lang = "en")
         {
+            if (!(await _languageRepository.LanguageExists(lang)))
+            {
+                ModelState.AddModelError("", $"Language doesn't exist");
+                return StatusCode(500, ModelState);
+            }
+
             if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
@@ -373,7 +404,7 @@ namespace Primeflix.Controllers
             var genresDto = new List<GenreDto>();
             foreach (var genre in genres)
             {
-                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
                 genresDto.Add(new GenreDto()
                 {
                     Id = genre.Id,
@@ -394,19 +425,30 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> CreateProduct([FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToCreate)
+        public async Task<IActionResult> CreateProduct([FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genreId, [FromBody] Product productToCreate)
         {
-            var statusCode = await ValidateProduct(dirId, actId, genresId, productToCreate);
+            var userRole = await GetUserRoleFromToken();
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
+            var statusCode = await ValidateProduct(dirId, actId, genreId, productToCreate);
 
             if (!ModelState.IsValid)
                 return StatusCode(statusCode.StatusCode);
 
-            productToCreate.Format = await _formatRepository.GetFormat(productToCreate.Format.Id);
+            productToCreate.Format = await _formatRepository.GetFormat(productToCreate.FormatId);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!await _productRepository.CreateProduct(productToCreate, dirId, actId, genresId))
+            if (!await _productRepository.CreateProduct(productToCreate, dirId, actId, genreId))
             {
                 ModelState.AddModelError("", $"Something went wrong saving the product {productToCreate.Title}");
                 return StatusCode(500, ModelState);
@@ -423,10 +465,23 @@ namespace Primeflix.Controllers
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> UpdateProduct(int productId, [FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genresId, [FromBody] Product productToUpdate)
+        public async Task<IActionResult> UpdateProduct(int productId, [FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genreId, [FromBody] Product productToUpdate)
         {
+            var userRole = await GetUserRoleFromToken();
 
-            var statusCode = await ValidateProduct(dirId, actId, genresId, productToUpdate);
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
+            var statusCode = await ValidateProduct(dirId, actId, genreId, productToUpdate);
+
+            if (!ModelState.IsValid)
+                return StatusCode(statusCode.StatusCode);
 
             if (productId != productToUpdate.Id)
                 return BadRequest();
@@ -434,12 +489,15 @@ namespace Primeflix.Controllers
             if (!await _productRepository.ProductExists(productId))
                 return NotFound();
 
-            productToUpdate.Format = await _formatRepository.GetFormat(productToUpdate.Format.Id);
+            if (!ModelState.IsValid)
+                return StatusCode(statusCode.StatusCode);
+
+            productToUpdate.Format = await _formatRepository.GetFormat(productToUpdate.FormatId);
 
             if (!ModelState.IsValid)
                 return StatusCode(statusCode.StatusCode);
 
-            if (!await _productRepository.UpdateProduct(productToUpdate, dirId, actId, genresId))
+            if (!await _productRepository.UpdateProduct(productToUpdate, dirId, actId, genreId))
             {
                 ModelState.AddModelError("", $"Something went wrong updating the product {productToUpdate.Title}");
                 return StatusCode(500, ModelState);
@@ -490,7 +548,7 @@ namespace Primeflix.Controllers
                 return StatusCode(422);
             }
 
-            if (!await _formatRepository.FormatExists(product.Format.Id))
+            if (!await _formatRepository.FormatExists(product.FormatId))
             {
                 ModelState.AddModelError("", "Format doesn't exist");
                 return StatusCode(404);
@@ -530,6 +588,36 @@ namespace Primeflix.Controllers
             }
 
             return NoContent();
+        }
+
+        public async Task<int> GetUserIdFromToken()
+        {
+            string bearerToken = HttpContext.Request.Headers["Authorization"];
+
+            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            {
+                return 0;
+            }
+
+            string token = bearerToken.Substring("Bearer ".Length);
+            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
+
+            return userId;
+        }
+
+        public async Task<string> GetUserRoleFromToken()
+        {
+            string bearerToken = HttpContext.Request.Headers["Authorization"];
+
+            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            {
+                return null;
+            }
+
+            string token = bearerToken.Substring("Bearer ".Length);
+            string role = await _authentication.DecodeTokenForRole(token);
+
+            return role;
         }
     }
 }

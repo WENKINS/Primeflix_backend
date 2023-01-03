@@ -51,7 +51,7 @@ namespace Primeflix.Models
         [Column("format_id")]
         public int FormatId { get; set; }
 
-        public Format Format { get; set; }
+        public Format? Format { get; set; }
 
         public virtual ICollection<Actor>? ActorsMovies { get; set; }
 

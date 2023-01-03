@@ -35,7 +35,6 @@ namespace Primeflix.Controllers
             if (!response)
                 return BadRequest();
             return Ok();
-
         }
 
         public async Task<int> GetUserIdFromToken()
