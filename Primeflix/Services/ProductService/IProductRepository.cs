@@ -13,8 +13,8 @@ namespace Primeflix.Services.ProductService
         Task<bool> IsDuplicate(int productId, string productTitle);
         Task<ICollection<Product>> FilterResults(bool recentlyAdded, int formatId, List<int> genresId);
         Task<ICollection<Product>> SearchProducts(string searchText);
-        Task<bool> CreateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
-        Task<bool> UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId);
+        Task<bool> CreateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId);
+        Task<bool> UpdateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId);
         Task<bool> DeleteProduct(Product product);
         Task<bool> Save();
     }

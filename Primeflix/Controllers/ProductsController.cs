@@ -425,7 +425,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> CreateProduct([FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genreId, [FromBody] Product productToCreate)
+        public async Task<IActionResult> CreateProduct([FromBody] ProductToCreateDto productToCreate)
         {
             var userRole = await GetUserRoleFromToken();
 
@@ -438,26 +438,52 @@ namespace Primeflix.Controllers
                 return StatusCode(401, ModelState);
             }
 
-            var statusCode = await ValidateProduct(dirId, actId, genreId, productToCreate);
+            var statusCode = await ValidateProduct(productToCreate);
 
             if (!ModelState.IsValid)
                 return StatusCode(statusCode.StatusCode);
 
-            productToCreate.Format = await _formatRepository.GetFormat(productToCreate.FormatId);
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!await _productRepository.CreateProduct(productToCreate, dirId, actId, genreId))
+            Product product = new Product()
             {
-                ModelState.AddModelError("", $"Something went wrong saving the product {productToCreate.Title}");
+                Title = productToCreate.OriginalTitle,
+                ReleaseDate = productToCreate.ReleaseDate,
+                Duration = productToCreate.Duration,
+                Stock = productToCreate.Stock,
+                Rating = productToCreate.Rating,
+                Format = await _formatRepository.GetFormat(productToCreate.FormatId),
+                PictureUrl = productToCreate.PictureUrl,
+                Price = productToCreate.Price
+            };
+
+            var productTranslations = new List<ProductTranslation>();
+
+            productTranslations.Add(new ProductTranslation
+            {
+                Language = await _languageRepository.GetLanguage(2),
+                Title = productToCreate.EnglishTitle,
+                Summary = productToCreate.EnglishSummary
+            });
+
+            productTranslations.Add(new ProductTranslation
+            {
+                Language = await _languageRepository.GetLanguage(1),
+                Title = productToCreate.FrenchTitle,
+                Summary = productToCreate.FrenchSummary
+            });
+
+            if (!await _productRepository.CreateProduct(product, productTranslations, productToCreate.DirectorsId, productToCreate.ActorsId, productToCreate.GenresId))
+            {
+                ModelState.AddModelError("", $"Something went wrong saving the product {productToCreate.OriginalTitle}");
                 return StatusCode(500, ModelState);
             }
 
-            return CreatedAtRoute("GetProduct", new { productId = productToCreate.Id }, productToCreate);
+            return CreatedAtRoute("GetProduct", new { productId = product.Id }, product);
         }
 
-        //api/products/productId?dirId=45&dirId=46&actId=1&genreId=1&genreId=2
+        //api/products/productId
         [Authorize]
         [HttpPut("{productId}")]
         [ProducesResponseType(204)] // no content
@@ -465,7 +491,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> UpdateProduct(int productId, [FromQuery] List<int> dirId, [FromQuery] List<int> actId, [FromQuery] List<int> genreId, [FromBody] Product productToUpdate)
+        public async Task<IActionResult> UpdateProduct(int productId, [FromBody] ProductToCreateDto productToUpdate)
         {
             var userRole = await GetUserRoleFromToken();
 
@@ -478,7 +504,7 @@ namespace Primeflix.Controllers
                 return StatusCode(401, ModelState);
             }
 
-            var statusCode = await ValidateProduct(dirId, actId, genreId, productToUpdate);
+            var statusCode = await ValidateProduct(productToUpdate);
 
             if (!ModelState.IsValid)
                 return StatusCode(statusCode.StatusCode);
@@ -492,14 +518,38 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return StatusCode(statusCode.StatusCode);
 
-            productToUpdate.Format = await _formatRepository.GetFormat(productToUpdate.FormatId);
-
-            if (!ModelState.IsValid)
-                return StatusCode(statusCode.StatusCode);
-
-            if (!await _productRepository.UpdateProduct(productToUpdate, dirId, actId, genreId))
+            Product product = new Product()
             {
-                ModelState.AddModelError("", $"Something went wrong updating the product {productToUpdate.Title}");
+                Id = (int)productToUpdate.Id,
+                Title = productToUpdate.OriginalTitle,
+                ReleaseDate = productToUpdate.ReleaseDate,
+                Duration = productToUpdate.Duration,
+                Stock = productToUpdate.Stock,
+                Rating = productToUpdate.Rating,
+                Format = await _formatRepository.GetFormat(productToUpdate.FormatId),
+                PictureUrl = productToUpdate.PictureUrl,
+                Price = productToUpdate.Price
+            };
+
+            var productTranslations = new List<ProductTranslation>();
+
+            productTranslations.Add(new ProductTranslation
+            {
+                Language = await _languageRepository.GetLanguage(2),
+                Title = productToUpdate.EnglishTitle,
+                Summary = productToUpdate.EnglishSummary
+            });
+
+            productTranslations.Add(new ProductTranslation
+            {
+                Language = await _languageRepository.GetLanguage(1),
+                Title = productToUpdate.FrenchTitle,
+                Summary = productToUpdate.FrenchSummary
+            });
+
+            if (!await _productRepository.UpdateProduct(product, productTranslations, productToUpdate.DirectorsId, productToUpdate.ActorsId, productToUpdate.GenresId))
+            {
+                ModelState.AddModelError("", $"Something went wrong updating the product {productToUpdate.OriginalTitle}");
                 return StatusCode(500, ModelState);
             }
 
@@ -517,8 +567,18 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteProduct(int productId)
         {
+            var userRole = await GetUserRoleFromToken();
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
             if (!await _productRepository.ProductExists(productId))
-                return NotFound();
+            return NotFound();
 
             var productToDelete = await _productRepository.GetProduct(productId);
 
@@ -534,18 +594,12 @@ namespace Primeflix.Controllers
             return NoContent();
         }
 
-        private async Task<StatusCodeResult> ValidateProduct(List<int> directorsId, List<int> actorsId, List<int> genresId, Product product)
+        private async Task<StatusCodeResult> ValidateProduct(ProductToCreateDto product)
         {
-            if (product == null || directorsId.Count() <= 0 || actorsId.Count() <= 0 || genresId.Count() <= 0)
+            if (product == null || product.DirectorsId.Count() <= 0 || product.ActorsId.Count() <= 0 || product.GenresId.Count() <= 0)
             {
                 ModelState.AddModelError("", "Missing product, director(s), actor(s), or genre(s)");
                 return BadRequest();
-            }
-
-            if(await _productRepository.IsDuplicate(product.Id, product.Title))
-            {
-                ModelState.AddModelError("", "Duplicate title");
-                return StatusCode(422);
             }
 
             if (!await _formatRepository.FormatExists(product.FormatId))
@@ -554,7 +608,7 @@ namespace Primeflix.Controllers
                 return StatusCode(404);
             }
 
-            foreach (var id in directorsId)
+            foreach (var id in product.DirectorsId)
             {
                 if(!await _celebrityRepository.CelebrityExists(id))
                 {
@@ -563,7 +617,7 @@ namespace Primeflix.Controllers
                 }
             }
 
-            foreach (var id in actorsId)
+            foreach (var id in product.ActorsId)
             {
                 if (!await _celebrityRepository.CelebrityExists(id))
                 {
@@ -572,7 +626,7 @@ namespace Primeflix.Controllers
                 }
             }
 
-            foreach (var id in genresId)
+            foreach (var id in product.GenresId)
             {
                 if (!await _genreRepository.GenreExists(id))
                 {
