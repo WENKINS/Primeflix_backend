@@ -151,6 +151,9 @@ namespace Primeflix.Controllers
             if (userId == null || userId == 0)
                 return BadRequest();
 
+            if (!(await _cartRepository.CartExists(userId)))
+                await _cartRepository.CreateCart(userId);
+
             if(!(await _cartRepository.EmptyCart(userId)))
             {
                 ModelState.AddModelError("", $"Something went wrong adding product to cart");
@@ -159,6 +162,11 @@ namespace Primeflix.Controllers
 
             foreach (var product in products)
             {
+                if(!await _productRepository.ProductExists(product.ProductId))
+                {
+                    ModelState.AddModelError("", $"Product {product.ProductId} does not exist");
+                    return StatusCode(404, ModelState);
+                }
                 if (!await _cartRepository.AddProductToCart(userId, product.ProductId, product.Quantity))
                 {
                     ModelState.AddModelError("", $"Something went wrong adding product to cart");
