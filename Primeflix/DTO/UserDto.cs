@@ -9,5 +9,6 @@
         public string Email { get; set; }
         public LanguageDto Language { get; set; }
         public RoleDto Role { get; set; }
+        public AddressDto Address { get; set; }
     }
 }

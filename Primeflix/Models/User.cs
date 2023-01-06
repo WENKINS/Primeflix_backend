@@ -26,5 +26,8 @@ namespace Primeflix.Models
         [Column("role_id")]
         public int RoleId { get; set; }
         public Role? Role { get; set; }
+        [Column("address_id")]
+        public int? AddressId { get; set; }
+        public Address? Address { get; set; }
     }
 }

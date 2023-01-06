@@ -4,6 +4,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using MySql.EntityFrameworkCore.Extensions;
 using Primeflix.Data;
+using Primeflix.Services.Address;
 using Primeflix.Services.Authentication;
 using Primeflix.Services.CartService;
 using Primeflix.Services.CelebrityService;
@@ -43,6 +44,7 @@ builder.Services.AddScoped<IAuthentication, Authentication>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,

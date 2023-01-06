@@ -25,7 +25,7 @@ namespace Primeflix.Controllers
             _productRepository = productRepository;
         }
 
-        [HttpPost]
+        /*[HttpPost]
         public async Task<IActionResult> PlaceOrder()
         {
             var userRole = await GetUserRoleFromToken();
@@ -38,7 +38,7 @@ namespace Primeflix.Controllers
             await _orderRepository.PlaceOrder(cart.Id);
 
             return Ok();
-        }
+        }*/
 
         [HttpGet]
         public async Task<IActionResult> GetOrders()

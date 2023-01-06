@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Primeflix.Services.Authentication;
 using Primeflix.Services.CartService;
+using Primeflix.Services.OrderService;
 using Primeflix.Services.PaymentService;
 
 namespace Primeflix.Controllers
@@ -12,11 +13,13 @@ namespace Primeflix.Controllers
         private readonly IPaymentRepository _paymentRepository;
         private readonly IAuthentication _authentication;
         private readonly ICartRepository _cartRepository;
-        public PaymentController(IPaymentRepository paymentRepository, IAuthentication authentication, ICartRepository cartRepository)
+        private readonly IOrderRepository _orderRepository;
+        public PaymentController(IPaymentRepository paymentRepository, IAuthentication authentication, ICartRepository cartRepository, IOrderRepository orderRepository)
         {
             _paymentRepository = paymentRepository;
             _authentication = authentication;
             _cartRepository = cartRepository;
+            _orderRepository = orderRepository;
         }
 
         [HttpPost("checkout")]
@@ -34,6 +37,7 @@ namespace Primeflix.Controllers
             var response = await _paymentRepository.FulfillOrder(Request);
             if (!response)
                 return BadRequest();
+
             return Ok();
         }
 
