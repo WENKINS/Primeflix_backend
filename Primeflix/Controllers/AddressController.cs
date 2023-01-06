@@ -84,16 +84,12 @@ namespace Primeflix.Controllers
 
             else
             {
-                var newAddress = new Address()
-                {
-                    Id = address.Id,
-                    Street = addressDto.Street,
-                    Number = addressDto.Number,
-                    PostalCode = addressDto.PostalCode,
-                    City = addressDto.City,
-                    Country = addressDto.Country
-                };
-                if (!(await _addressRepository.UpdateAddress(newAddress)))
+                address.Street = addressDto.Street;
+                address.Number = addressDto.Number;
+                address.PostalCode = addressDto.PostalCode;
+                address.City = addressDto.City;
+                address.Country = addressDto.Country;
+                if (!(await _addressRepository.UpdateAddress(address)))
                 {
                     ModelState.AddModelError("", "Something went wrong updating the user's address");
                     return StatusCode(500, ModelState);
