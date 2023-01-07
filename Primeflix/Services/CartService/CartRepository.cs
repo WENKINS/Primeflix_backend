@@ -17,6 +17,9 @@ namespace Primeflix.Services.CartService
             var product = _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
             var user = _databaseContext.Users.Where(u => u.Id == userId).FirstOrDefault();
 
+            if (!(await CartOfAUserExists(userId)))
+                await CreateCart(userId);
+
             var cart = await GetCartOfAUser(userId);
 
             var cartProduct = new CartProduct()

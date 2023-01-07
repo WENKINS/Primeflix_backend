@@ -3,20 +3,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Primeflix.Models
 {
-    [Table("order")]
-    public class Order
+    public class StatusTranslation
     {
         [Key]
-        [Column("order_id")]
+        [Column("status_translation_id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [Column("user_id")]
-        public int UserId { get; set; }
-        public User User { get; set; }
         public int StatusId { get; set; }
         public Status Status { get; set; }
-        public DateTime Date {get;set;}
-        public float Total { get; set; }
-        public virtual ICollection<OrderDetails>? OrderDetails { get; set; }
+        public int LanguageId { get; set; }
+        public Language Language { get; set; }
+        public string Name { get; set; }
     }
 }

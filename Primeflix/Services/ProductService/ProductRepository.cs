@@ -14,7 +14,7 @@ namespace Primeflix.Services.ProductService
             _databaseContext = databaseContext;
         }
 
-        public async Task<bool> CreateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId)
+        public async Task<bool> CreateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId)
         {
             var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();
             var actors = _databaseContext.Celebrities.Where(c => actorsId.Contains(c.Id)).ToList();
@@ -50,7 +50,14 @@ namespace Primeflix.Services.ProductService
                 _databaseContext.Add(productGenre);
             }
 
+            foreach (var translation in translations)
+            {
+                translation.Product = product;
+                _databaseContext.Add(translation);
+            }
+
             _databaseContext.Add(product);
+
             return await Save();
         }
 
@@ -263,7 +270,7 @@ namespace Primeflix.Services.ProductService
                 .ToList();
         }
 
-        public async Task<bool> UpdateProduct(Product product, List<int> directorsId, List<int> actorsId, List<int> genresId)
+        public async Task<bool> UpdateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId)
         {
             var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();
             var actors = _databaseContext.Celebrities.Where(c => actorsId.Contains(c.Id)).ToList();
@@ -272,10 +279,14 @@ namespace Primeflix.Services.ProductService
             var productDirectorsToDelete = _databaseContext.Directors.Where(d => d.ProductId == product.Id);
             var productActorsToDelete = _databaseContext.Actors.Where(a => a.ProductId == product.Id);
             var productGenresToDelete = _databaseContext.ProductsGenres.Where(g => g.ProductId == product.Id);
+            var translationsToDelete = _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == product.Id);
 
             _databaseContext.RemoveRange(productDirectorsToDelete);
             _databaseContext.RemoveRange(productActorsToDelete);
             _databaseContext.RemoveRange(productGenresToDelete);
+            _databaseContext.RemoveRange(translationsToDelete);
+
+            await Save();
 
             foreach (var director in directors)
             {
@@ -307,7 +318,14 @@ namespace Primeflix.Services.ProductService
                 _databaseContext.Add(productGenre);
             }
 
+            foreach (var translation in translations)
+            {
+                translation.Product = product;
+                _databaseContext.Add(translation);
+            }
+
             _databaseContext.Update(product);
+
             return await Save();
         }
     }

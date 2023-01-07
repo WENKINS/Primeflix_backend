@@ -10,19 +10,24 @@ namespace Primeflix.Models
         [Column("user_id")]
         public int Id { get; set; }
         [Column("first_name")]
-        public string? FirstName { get; set; }
+        public string FirstName { get; set; }
         [Column("last_name")]
-        public string? LastName { get; set; }
-        public string? Phone { get; set; }
+        public string LastName { get; set; }
+        public string Phone { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        [Column("password_hash")]
+        public byte[]? PasswordHash { get; set; }
+        [Column("password_salt")]
+        public byte[]? PasswordSalt { get; set; }
         [Column("language_id")]
         public int LanguageId { get; set; }
-
-        public Language Language { get; set; }
-        public Cart cart { get; set; }
+        public Language? Language { get; set; }
+        public Cart? Cart { get; set; }
         [Column("role_id")]
         public int RoleId { get; set; }
-        public Role Role { get; set; }
+        public Role? Role { get; set; }
+        [Column("address_id")]
+        public int? AddressId { get; set; }
+        public Address? Address { get; set; }
     }
 }
