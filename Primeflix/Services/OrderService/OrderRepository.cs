@@ -98,5 +98,11 @@ namespace Primeflix.Services.OrderService
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
+
+        public async Task<bool> UpdateOrder(Order order)
+        {
+            _databaseContext.Update(order);
+            return await Save();
+        }
     }
 }

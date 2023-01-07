@@ -12,6 +12,7 @@ namespace Primeflix.Services.OrderService
         Task<bool> OrderExists(int orderId);
         Task<bool> IsDuplicate(int orderId, int userId);
         Task<bool> DeleteOrder(Order order);
+        Task<bool> UpdateOrder(Order order);
         Task<bool> Save();
     }
 }
