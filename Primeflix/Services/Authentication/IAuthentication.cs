@@ -17,5 +17,6 @@ namespace Primeflix.Services.Authentication
         Task<bool> Save();
         Task<string> DecodeTokenForId(string token);
         Task<string?> DecodeTokenForRole(string token);
+        Task<string> LoginWithFacebook(string accessToken);
     }
 }
