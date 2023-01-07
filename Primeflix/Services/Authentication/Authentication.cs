@@ -2,6 +2,7 @@
 using Primeflix.Data;
 using Primeflix.DTO;
 using Primeflix.Models;
+using Primeflix.Services.FacebookService;
 using Primeflix.Services.RoleService;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -14,12 +15,14 @@ namespace Primeflix.Services.Authentication
         private DatabaseContext _databaseContext;
         private readonly IConfiguration _configuration;
         private IRoleRepository _roleRepository;
+        private readonly IFacebookRepository _facebookRepository;
 
-        public Authentication(DatabaseContext databaseContext, IConfiguration configuration, IRoleRepository roleRepository)
+        public Authentication(DatabaseContext databaseContext, IConfiguration configuration, IRoleRepository roleRepository, IFacebookRepository facebookRepository)
         {
             _databaseContext = databaseContext;
             _configuration = configuration;
             _roleRepository = roleRepository;
+            _facebookRepository = facebookRepository;
         }
 
         public async Task<string> Login(string email, string password)
@@ -182,6 +185,37 @@ namespace Primeflix.Services.Authentication
         {
             _databaseContext.Remove(user);
             return await Save();
+        }
+
+        public async Task<string> LoginWithFacebook(string accessToken)
+        {
+            var validatedTokenResult = await _facebookRepository.ValidateAccessToken(accessToken);
+            if (!validatedTokenResult.Data.IsValid)
+                return "Invalid token";
+
+            var userInfo = await _facebookRepository.GetUserInfo(accessToken);
+
+            var user = await GetUser(userInfo.Email);
+
+            if(user == null)
+            {
+                user = new User()
+                {
+                    Email = userInfo.Email,
+                    FirstName = userInfo.FirstName,
+                    LastName = userInfo.LastName,
+                    Language = _databaseContext.Languages.Where(l => l.Name == "English").FirstOrDefault(),
+                    Role = _databaseContext.Roles.Where(r => r.Name == "client").FirstOrDefault()
+                };
+
+                _databaseContext.Users.Add(user);
+                var result = await Save();
+                if (!result)
+                    return "";
+                return await CreateToken(user);
+            }
+
+            return await CreateToken(user);
         }
     }
 }

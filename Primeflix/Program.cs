@@ -8,6 +8,7 @@ using Primeflix.Services.Address;
 using Primeflix.Services.Authentication;
 using Primeflix.Services.CartService;
 using Primeflix.Services.CelebrityService;
+using Primeflix.Services.FacebookService;
 using Primeflix.Services.FormatService;
 using Primeflix.Services.GenreService;
 using Primeflix.Services.GenreTranslationService;
@@ -45,12 +46,14 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+builder.Services.AddScoped<IFacebookRepository, FacebookRepository>();
+builder.Services.AddHttpClient();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:8080", "http://localhost:8081", "http://localhost:8082");
+            policy.WithOrigins("http://localhost:8080", "http://localhost:8081", "http://localhost:8082", "http://localhost:8083", "http://localhost:8084");
         });
 });
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
