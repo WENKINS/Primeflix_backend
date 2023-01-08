@@ -10,21 +10,21 @@ namespace Primeflix.Services.PaymentService
     public class PaymentRepository : IPaymentRepository
     {
         private readonly ICartRepository _cartRepository;
-        private readonly IUserRepository _authentication;
+        private readonly IUserRepository _userRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IProductRepository _productRepository;
         private readonly IConfiguration _configuration;
 
         public PaymentRepository(
             ICartRepository cartRepository, 
-            IUserRepository authentication, 
+            IUserRepository userRepository, 
             IOrderRepository orderRepository, 
             IProductRepository productRepository,
             IConfiguration configuration
             )
         {
             _cartRepository = cartRepository;
-            _authentication = authentication;
+            _userRepository = userRepository;
             _orderRepository = orderRepository;
             _productRepository = productRepository;
             _configuration = configuration;
@@ -57,7 +57,7 @@ namespace Primeflix.Services.PaymentService
             }
 
             var cart = await _cartRepository.GetCart(cartId);
-            var user = await _authentication.GetUser(cart.UserId);
+            var user = await _userRepository.GetUser(cart.UserId);
 
             var options = new SessionCreateOptions
             {
@@ -96,7 +96,7 @@ namespace Primeflix.Services.PaymentService
                 if (stripeEvent.Type == Events.CheckoutSessionCompleted)
                 {
                     var session = stripeEvent.Data.Object as Session;
-                    var user = await _authentication.GetUser(session.CustomerEmail);
+                    var user = await _userRepository.GetUser(session.CustomerEmail);
                     var cart = await _cartRepository.GetCartOfAUser(user.Id);
                     await _orderRepository.PlaceOrder(cart.Id);
                 }

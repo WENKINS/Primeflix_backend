@@ -76,42 +76,33 @@ namespace Primeflix.Controllers
         //api/celebrities
         [HttpPost]
         [Authorize]
-        [ProducesResponseType(201, Type = typeof(Celebrity))]
+        [ProducesResponseType(201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
+        [ProducesResponseType(409)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> CreateCelebrity([FromBody] Celebrity celebrityToCreate)
         {
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
 
             if (!userRole.Equals("admin"))
-            {
-                ModelState.AddModelError("", "User is not an admin");
-                return StatusCode(401, ModelState);
-            }
+                return StatusCode(401, "User is not an admin");
 
             if (celebrityToCreate == null)
-                return BadRequest(ModelState);
+                return BadRequest("No data was provided");
 
             if (await _celebrityRepository.CelebrityExists(celebrityToCreate.FirstName, celebrityToCreate.LastName))
-            {
-                ModelState.AddModelError("", $"Celebrity {celebrityToCreate.FirstName} {celebrityToCreate.LastName} already exists");
-                return StatusCode(422, ModelState);
-            }
+                return StatusCode(409, $"Celebrity {celebrityToCreate.FirstName} {celebrityToCreate.LastName} already exists");
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             if (!await _celebrityRepository.CreateCelebrity(celebrityToCreate))
-            {
-                ModelState.AddModelError("", $"Something went wrong saving {celebrityToCreate.FirstName} {celebrityToCreate.LastName}");
-                return StatusCode(500, ModelState);
-            }
+                return StatusCode(500, $"Something went wrong saving {celebrityToCreate.FirstName} {celebrityToCreate.LastName}");
 
-            return CreatedAtRoute("GetCelebrity", new { celebrityId = celebrityToCreate.Id }, celebrityToCreate);
+            return StatusCode(201);
         }
 
         //api/celebrities/celebrityId
@@ -127,37 +118,28 @@ namespace Primeflix.Controllers
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
 
             if (!userRole.Equals("admin"))
-            {
-                ModelState.AddModelError("", "User is not an admin");
-                return StatusCode(401, ModelState);
-            }
+                return StatusCode(401, "User is not an admin");
 
             if (updatedCelebrity == null)
-                return BadRequest(ModelState);
+                return BadRequest("No data was provided");
 
             if (celebrityId != updatedCelebrity.Id)
-                return BadRequest(ModelState);
+                return BadRequest("User IDs are not the same");
 
             if (!await _celebrityRepository.CelebrityExists(celebrityId))
                 return NotFound();
 
             if (await _celebrityRepository.IsDuplicate(updatedCelebrity.FirstName, updatedCelebrity.LastName))
-            {
-                ModelState.AddModelError("", $"Celebrity {updatedCelebrity.FirstName} {updatedCelebrity.LastName} already exists");
-                return StatusCode(422, ModelState);
-            }
+                return StatusCode(422, $"Celebrity {updatedCelebrity.FirstName} {updatedCelebrity.LastName} already exists");
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             if (!await _celebrityRepository.UpdateCelebrity(updatedCelebrity))
-            {
-                ModelState.AddModelError("", $"Something went wrong update {updatedCelebrity.FirstName} {updatedCelebrity.LastName}");
-                return StatusCode(500, ModelState);
-            }
+                return StatusCode(500, $"Something went wrong update {updatedCelebrity.FirstName} {updatedCelebrity.LastName}");
 
             return NoContent();
         }
@@ -176,13 +158,10 @@ namespace Primeflix.Controllers
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
 
             if (!userRole.Equals("admin"))
-            {
-                ModelState.AddModelError("", "User is not an admin");
-                return StatusCode(401, ModelState);
-            }
+                return StatusCode(401, "User is not an admin");
 
             if (!await _celebrityRepository.CelebrityExists(celebrityId))
                 return NotFound();
@@ -193,10 +172,7 @@ namespace Primeflix.Controllers
                 return BadRequest(ModelState);
 
             if (!await _celebrityRepository.DeleteCelebrity(celebrityToDelete))
-            {
-                ModelState.AddModelError("", $"Something went wrong deleting {celebrityToDelete.FirstName} {celebrityToDelete.LastName}");
-                return StatusCode(500, ModelState);
-            }
+                return StatusCode(500, $"Something went wrong deleting {celebrityToDelete.FirstName} {celebrityToDelete.LastName}");
 
             return NoContent();
         }

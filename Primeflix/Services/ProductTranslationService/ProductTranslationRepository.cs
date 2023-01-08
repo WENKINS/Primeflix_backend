@@ -35,7 +35,7 @@ namespace Primeflix.Services.ProductTranslationService
         public async Task<ProductTranslation> GetProductTranslation(int productId, string languageCode)
         {
             return _databaseContext.ProductsTranslations
-                .Where(pt => pt.ProductId == productId && pt.Language.Code.Equals(languageCode))
+                .Where(pt => pt.ProductId == productId && pt.Language.Code.Trim().ToUpper().Equals(languageCode.Trim().ToUpper()))
                 .FirstOrDefault();
         }
 

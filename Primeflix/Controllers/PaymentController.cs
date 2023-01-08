@@ -35,7 +35,7 @@ namespace Primeflix.Controllers
             var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null)
-                return BadRequest();
+                return BadRequest("User ID could not be retrieved");
 
             var cartId = (await _cartRepository.GetCartOfAUser(userId)).Id;
 
