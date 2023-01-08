@@ -120,9 +120,6 @@ namespace Primeflix.Controllers
                 });
             }
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             return Ok(celebritiesDto);
         }
 
@@ -185,11 +182,11 @@ namespace Primeflix.Controllers
                     });
                 }
                 
-                var oFormat = await _formatRepository.GetFormatOfAProduct(product.Id);
+                var format = await _formatRepository.GetFormatOfAProduct(product.Id);
                 var formatDto = new FormatDto()
                 {
-                    Id = oFormat.Id,
-                    Name = oFormat.Name
+                    Id = format.Id,
+                    Name = format.Name
                 };
 
                 var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);

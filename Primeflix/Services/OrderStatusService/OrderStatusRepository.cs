@@ -19,31 +19,38 @@ namespace Primeflix.Services.OrderStatusService
                 .Any();
         }
 
-        public async Task<bool> IsDuplicate(string statusName)
+        public async Task<bool> StatusExists(string statusName)
         {
-            return _databaseContext.Statuses
-                .Where(s => s.Name.Equals(statusName))
+            return _databaseContext.StatusTranslations
+                .Where(st => st.Name.Trim().ToUpper().Equals(statusName.Trim().ToUpper()))
                 .Any();
         }
 
-        public async Task<ICollection<StatusTranslation>> GetOrderStatuses(int languageId)
+        public async Task<bool> IsDuplicate(string statusName)
+        {
+            return _databaseContext.Statuses
+                .Where(s => s.Name.Trim().ToUpper().Equals(statusName.Trim().ToUpper()))
+                .Any();
+        }
+
+        public async Task<ICollection<StatusTranslation>> GetOrderStatuses(string languageCode)
         {
             return _databaseContext.StatusTranslations
-                .Where(st => st.LanguageId == languageId)
+                .Where(st => st.Language.Code.Equals(languageCode))
                 .ToList();
         }
 
-        public async Task<StatusTranslation> GetStatus(int statusId, int languageId)
+        public async Task<StatusTranslation> GetStatus(int statusId, string languageCode)
         {
             return _databaseContext.StatusTranslations
-                .Where(s => s.Id == statusId && s.LanguageId == languageId)
+                .Where(st => st.Language.Code.Equals(languageCode))
                 .FirstOrDefault();
         }
 
-        public async Task<StatusTranslation> GetStatus(string statusName, int languageId)
+        public async Task<StatusTranslation> GetStatus(string statusName, string languageCode)
         {
             return _databaseContext.StatusTranslations
-                .Where(st => st.Name.Equals(statusName) && st.LanguageId == languageId)
+                .Where(st => st.Name.Equals(statusName) && st.Language.Code.Equals(languageCode))
                 .FirstOrDefault();
         }
 
@@ -57,7 +64,7 @@ namespace Primeflix.Services.OrderStatusService
         public async Task<Status> GetStatus(string statusName)
         {
             return _databaseContext.StatusTranslations
-                .Where(st => st.Name.Equals(statusName))
+                .Where(st => st.Name.Trim().ToUpper().Equals(statusName.Trim().ToUpper()))
                 .Select(st => st.Status)
                 .FirstOrDefault();
         }
@@ -69,6 +76,12 @@ namespace Primeflix.Services.OrderStatusService
                 .ToList();
         }
 
+        public async Task<ICollection<Order>> GetOrdersOfAStatusAndUser(int statusId, int userId)
+        {
+            return _databaseContext.Orders
+                .Where(o => o.StatusId == statusId && o.UserId == userId)
+                .ToList();
+        }
 
         public async Task<bool> CreateStatus(Status status, List<StatusTranslation> translations)
         {

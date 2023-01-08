@@ -22,7 +22,7 @@ namespace Primeflix.Services.FormatService
         public async Task<bool> FormatExists(string formatName)
         {
             return _databaseContext.Formats
-                .Where(f => f.Name.Equals(formatName))
+                .Where(f => f.Name.Trim().ToUpper().Equals(formatName.Trim().ToUpper()))
                 .Any();
         }
 
@@ -51,7 +51,7 @@ namespace Primeflix.Services.FormatService
         public async Task<Format> GetFormat(string formatName)
         {
             return _databaseContext.Formats
-                .Where(f => f.Name.Equals(formatName))
+                .Where(f => f.Name.Trim().ToUpper().Equals(formatName.Trim().ToUpper()))
                 .FirstOrDefault();
         }
 

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
@@ -37,21 +36,15 @@ namespace Primeflix.Controllers
         [AllowAnonymous]
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(422)]
+        [ProducesResponseType(409)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> Register(UserRegisterDto newUser)
         {
             if (newUser == null)
-                return BadRequest(ModelState);
+                return BadRequest("No data was provided");
 
             if (await _userRepository.UserExists(newUser.Email))
-            {
-                ModelState.AddModelError("", $"A user with email address {newUser.Email} already exists");
-                return StatusCode(422, ModelState);
-            }
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return StatusCode(409, $"A user with email address {newUser.Email} already exists");
 
             var user = new User()
             {
@@ -62,18 +55,12 @@ namespace Primeflix.Controllers
             };
 
             if (!await _userRepository.Register(user, newUser.Password))
-            {
-                ModelState.AddModelError("", $"Something went wrong saving user with address {newUser.Email}");
-                return StatusCode(500, ModelState);
-            }
+                return StatusCode(500, $"Something went wrong saving user with address {newUser.Email}");
 
             var userId = (await _userRepository.GetUser(user.Email)).Id;
 
-            if(!await _cartRepository.CreateCart(userId))
-            {
-                ModelState.AddModelError("", $"Something went wrong creating user's cart");
-                return StatusCode(500, ModelState);
-            }
+            if (!await _cartRepository.CreateCart(userId))
+                return StatusCode(500, $"Something went wrong creating user's cart");
 
             return StatusCode(201);
         }
@@ -90,24 +77,15 @@ namespace Primeflix.Controllers
         public async Task<IActionResult> Login(UserLoginDto userLogin)
         {
             if (userLogin == null)
-                return BadRequest(ModelState);
+                return BadRequest("No data was provided");
 
             if (!await _userRepository.UserExists(userLogin.Email))
-            {
-                ModelState.AddModelError("", $"User {userLogin.Email} doesn't exist"); // SECURITY RISK!
-                return StatusCode(422, ModelState);
-            }
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return NotFound();
 
             var response = await _userRepository.Login(userLogin.Email, userLogin.Password);
 
             if (response == null)
-            {
-                ModelState.AddModelError("", "Wrong password");
-                return StatusCode(401, ModelState);
-            }
+                return StatusCode(401, "Wrong password");
 
             return Ok(response);
         }
@@ -123,18 +101,12 @@ namespace Primeflix.Controllers
         public async Task<IActionResult> Login([FromBody]string token)
         {
             if (String.IsNullOrEmpty(token))
-                return BadRequest(ModelState);
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest("No token provided");
 
             var response = await _userRepository.LoginWithFacebook(token);
 
             if (response.Equals("Invalid token") || String.IsNullOrEmpty(response))
-            {
-                ModelState.AddModelError("", "Wrong access token provided");
-                return StatusCode(401, ModelState);
-            }
+                return StatusCode(401, "Wrong access token provided");
 
             return Ok(response);
         }
@@ -150,56 +122,29 @@ namespace Primeflix.Controllers
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User Role could not be retrieved");
+
+            var users = new List<User>();
 
             if (userRole.Equals("admin"))
             {
-                var users = await _userRepository.GetUsers();
-
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var usersDto = new List<UserDto>();
-                foreach (var user in users)
-                {
-                    var language = await _languageRepository.GetLanguageOfAUser(user.Id);
-                    var languageDto = new LanguageDto()
-                    {
-                        Id = language.Id,
-                        Name = language.Name,
-                        Code = language.Code
-                    };
-
-                    var role = await _roleRepository.GetRoleOfAUser(user.Id);
-                    var roleDto = new RoleDto()
-                    {
-                        Id = role.Id,
-                        Name = role.Name
-                    };
-
-                    usersDto.Add(new UserDto
-                    {
-                        Id = user.Id,
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                        Phone = user.Phone,
-                        Email = user.Email,
-                        Language = languageDto,
-                        Role = roleDto
-                    });
-                }
-                return Ok(usersDto);
+                users = (List<User>)await _userRepository.GetUsers();
             }
 
             else
             {
                 var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
-                var user = await _userRepository.GetUser(userId);
+                if (userId == null)
+                    return BadRequest("User ID could not be retrieved");
 
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+                users.Add(await _userRepository.GetUser(userId));
+            }
 
+            var usersDto = new List<UserDto>();
+
+            foreach (var user in users)
+            {
                 var language = await _languageRepository.GetLanguageOfAUser(user.Id);
                 var languageDto = new LanguageDto()
                 {
@@ -215,21 +160,19 @@ namespace Primeflix.Controllers
                     Name = role.Name
                 };
 
-                var userDto = new UserDto()
+                usersDto.Add(new UserDto
                 {
                     Id = user.Id,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Email = user.Email,
                     Phone = user.Phone,
+                    Email = user.Email,
                     Language = languageDto,
                     Role = roleDto
-                };
-
-                return Ok(userDto);
+                });
             }
 
-
+            return Ok(usersDto);
         }
 
         //api/users/userId
@@ -246,47 +189,41 @@ namespace Primeflix.Controllers
             if (userRole == null)
                 return BadRequest();
 
-            if (userRole.Equals("admin"))
+            if (!userRole.Equals("admin"))
+                return StatusCode(401, "User is not an admin");
+
+            if (!await _userRepository.UserExists(userId))
+                return NotFound();
+
+            var user = await _userRepository.GetUser(userId);
+
+            var language = await _languageRepository.GetLanguageOfAUser(user.Id);
+            var languageDto = new LanguageDto()
             {
-                if (!await _userRepository.UserExists(userId))
-                    return NotFound();
+                Id = language.Id,
+                Name = language.Name,
+                Code = language.Code
+            };
 
-                var user = await _userRepository.GetUser(userId);
+            var role = await _roleRepository.GetRoleOfAUser(user.Id);
+            var roleDto = new RoleDto()
+            {
+                Id = role.Id,
+                Name = role.Name
+            };
 
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+            var userDto = new UserDto()
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Phone = user.Phone,
+                Language = languageDto,
+                Role = roleDto
+            };
 
-                var language = await _languageRepository.GetLanguageOfAUser(user.Id);
-                var languageDto = new LanguageDto()
-                {
-                    Id = language.Id,
-                    Name = language.Name,
-                    Code = language.Code
-                };
-
-                var role = await _roleRepository.GetRoleOfAUser(user.Id);
-                var roleDto = new RoleDto()
-                {
-                    Id = role.Id,
-                    Name = role.Name
-                };
-
-                var userDto = new UserDto()
-                {
-                    Id = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email,
-                    Phone = user.Phone,
-                    Language = languageDto,
-                    Role = roleDto
-                };
-
-                return Ok(userDto);
-            }
-
-            ModelState.AddModelError("", "User is not an admin");
-            return StatusCode(401, ModelState);
+            return Ok(userDto);
         }
 
         //api/users/userId
@@ -295,37 +232,26 @@ namespace Primeflix.Controllers
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(409)]
-        [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteUser(int userId)
         {
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
 
-            if (userRole.Equals("admin"))
-            {
-                if (!await _userRepository.UserExists(userId))
-                    return NotFound();
+            if (!userRole.Equals("admin"))
+                return StatusCode(401, "User is not an admin");
 
-                var userToDelete = await _userRepository.GetUser(userId);
+            if (!await _userRepository.UserExists(userId))
+                return NotFound();
 
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+            var userToDelete = await _userRepository.GetUser(userId);
 
-                if (!await _userRepository.DeleteUser(userToDelete))
-                {
-                    ModelState.AddModelError("", $"Something went wrong deleting {userToDelete.FirstName} {userToDelete.LastName}");
-                    return StatusCode(500, ModelState);
-                }
+            if (!await _userRepository.DeleteUser(userToDelete))
+                return StatusCode(500, $"Something went wrong deleting {userToDelete.FirstName} {userToDelete.LastName}");
 
-                return NoContent();
-            }
-
-            ModelState.AddModelError("", "User is not an admin");
-            return StatusCode(401, ModelState);
+            return NoContent();
         }
 
         //api/users
@@ -341,32 +267,27 @@ namespace Primeflix.Controllers
             var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null)
-                return BadRequest();
+                return BadRequest("User ID could not be retrieved");
 
             if (userId != userToUpdate.Id)
-                return BadRequest();
+                return BadRequest("User IDs are not the same");
 
             if (!await _userRepository.UserExists(userId))
                 return NotFound();
 
             var user = await _userRepository.GetUser(userToUpdate.Id);
 
+            if (!(await _languageRepository.LanguageExists(userToUpdate.LanguageId)))
+                return BadRequest("Language doesn't exist");
+
             user.FirstName = userToUpdate.FirstName;
             user.LastName = userToUpdate.LastName;
             user.Phone = userToUpdate.Phone;
-            if(!(await _languageRepository.LanguageExists(userToUpdate.LanguageId)))
-            {
-                ModelState.AddModelError("", $"The language doesn't exist");
-                return StatusCode(500, ModelState);
-            }
             user.Language = await _languageRepository.GetLanguage(userToUpdate.LanguageId);
             user.Email = userToUpdate.Email;
 
             if (!await _userRepository.UpdateUser(user))
-            {
-                ModelState.AddModelError("", $"Something went wrong updating the user {userToUpdate.FirstName} {userToUpdate.LastName}");
-                return StatusCode(500, ModelState);
-            }
+                return StatusCode(500, $"Something went wrong updating the user {userToUpdate.FirstName} {userToUpdate.LastName}");
 
             return NoContent();
         }
@@ -377,54 +298,42 @@ namespace Primeflix.Controllers
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> UpdateUser(int userId, [FromBody] User userToUpdate)
         {
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
 
-            if (userRole.Equals("admin"))
-            {
-                if (userId != userToUpdate.Id)
-                    return BadRequest();
+            if (!userRole.Equals("admin"))
+                return StatusCode(401, "User is not an admin");
 
-                if (!await _userRepository.UserExists(userId))
-                    return NotFound();
+            if (userId != userToUpdate.Id)
+                return BadRequest("Uder IDs are not the same");
 
-                var user = await _userRepository.GetUser(userToUpdate.Id);
+            if (!await _userRepository.UserExists(userId))
+                return NotFound();
 
-                user.FirstName = userToUpdate.FirstName;
-                user.LastName = userToUpdate.LastName;
-                user.Phone = userToUpdate.Phone;
-                if (!(await _roleRepository.RoleExists(userToUpdate.RoleId)))
-                {
-                    ModelState.AddModelError("", $"The role doesn't exist");
-                    return StatusCode(500, ModelState);
-                }
-                user.Role = await _roleRepository.GetRole(userToUpdate.RoleId);
-                if (!(await _languageRepository.LanguageExists(userToUpdate.LanguageId)))
-                {
-                    ModelState.AddModelError("", $"The language doesn't exist");
-                    return StatusCode(500, ModelState);
-                }
-                user.Language = await _languageRepository.GetLanguage(userToUpdate.LanguageId);
-                user.Email = userToUpdate.Email;
+            var user = await _userRepository.GetUser(userToUpdate.Id);
 
-                if (!await _userRepository.UpdateUser(user))
-                {
-                    ModelState.AddModelError("", $"Something went wrong updating the user {userToUpdate.FirstName} {userToUpdate.LastName}");
-                    return StatusCode(500, ModelState);
-                }
+            if (!(await _roleRepository.RoleExists(userToUpdate.RoleId)))
+                return BadRequest("Role doesn't exist");
 
-                return NoContent();
-            }
+            if (!(await _languageRepository.LanguageExists(userToUpdate.LanguageId)))
+                return BadRequest("Language doesn't exist");
 
+            user.FirstName = userToUpdate.FirstName;
+            user.LastName = userToUpdate.LastName;
+            user.Phone = userToUpdate.Phone;
+            user.Role = await _roleRepository.GetRole(userToUpdate.RoleId);
+            user.Language = await _languageRepository.GetLanguage(userToUpdate.LanguageId);
+            user.Email = userToUpdate.Email;
 
-            ModelState.AddModelError("", "User is not an admin");
-            return StatusCode(401, ModelState);
+            if (!await _userRepository.UpdateUser(user))
+                return StatusCode(500, $"Something went wrong updating the user {userToUpdate.FirstName} {userToUpdate.LastName}");
+
+            return NoContent();
         }
     }
 }

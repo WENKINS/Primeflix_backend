@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
+using Primeflix.Models;
 using Primeflix.Services.LanguageService;
+using Primeflix.Services.OrderService;
 using Primeflix.Services.OrderStatusService;
 using Primeflix.Services.UserService;
 
@@ -14,16 +16,19 @@ namespace Primeflix.Controllers
         private readonly ILanguageRepository _languageRepository;
         private readonly IUserRepository _userRepository;
         private readonly IOrderStatusRepository _orderStatusRepository;
+        private readonly IOrderRepository _orderRepository;
         
         public OrderStatusController(
             ILanguageRepository languageRepository,
             IUserRepository userRepository,
-            IOrderStatusRepository orderStatusRepository
+            IOrderStatusRepository orderStatusRepository,
+            IOrderRepository orderRepository
             )
         {
             _languageRepository = languageRepository;
             _userRepository = userRepository;
             _orderStatusRepository = orderStatusRepository;
+            _orderRepository = orderRepository;
         }
 
         [HttpGet]
@@ -32,28 +37,20 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> GetStatuses([FromQuery]string lang)
+        public async Task<IActionResult> GetStatuses([FromQuery]string? lang = "en")
         {
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
 
             if (!userRole.Equals("admin"))
-            {
-                ModelState.AddModelError("", "User is not an admin");
-                return StatusCode(401, ModelState);
-            }
+                return StatusCode(401, "User is not an admin");
 
             if (!(await _languageRepository.LanguageExists(lang)))
-            {
-                ModelState.AddModelError("", $"Language doesn't exist");
-                return StatusCode(500, ModelState);
-            }
+                return StatusCode(500, "Language doesn't exist");
 
-            var language = await _languageRepository.GetLanguage(lang);
-
-            var statuses = await _orderStatusRepository.GetOrderStatuses(language.Id);
+            var statuses = await _orderStatusRepository.GetOrderStatuses(lang);
 
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -70,5 +67,6 @@ namespace Primeflix.Controllers
 
             return Ok(statusesDto);
         }
+
     }
 }

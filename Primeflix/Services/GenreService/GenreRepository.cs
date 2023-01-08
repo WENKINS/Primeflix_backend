@@ -38,7 +38,7 @@ namespace Primeflix.Services.GenreService
         public async Task<ICollection<Genre>> GetGenres(string languageCode)
         {
             return _databaseContext.GenresTranslations
-                .Where(gt => gt.Language.Code == languageCode)
+                .Where(gt => gt.Language.Code.Trim().ToUpper().Equals(languageCode.Trim().ToUpper()))
                 .Select(g => g.Genre)
                 .ToList();
         }
@@ -51,7 +51,7 @@ namespace Primeflix.Services.GenreService
         public async Task<Genre> GetGenre(string genreName)
         {
             return _databaseContext.GenresTranslations
-                .Where(gt => gt.Translation.Equals(genreName))
+                .Where(gt => gt.Translation.Trim().ToUpper().Equals(genreName.Trim().ToUpper()))
                 .Select(gt => gt.Genre)
                 .FirstOrDefault();
         }
@@ -105,10 +105,10 @@ namespace Primeflix.Services.GenreService
         public async Task<bool> UpdateGenre(GenreWithTranslationsDto genre)
         {
             var frenchTranslationToDelete = _databaseContext.GenresTranslations
-                                                .Where(gt => gt.Translation.Equals(genre.FrenchName))
+                                                .Where(gt => gt.Translation.Trim().ToUpper().Equals(genre.FrenchName.Trim().ToUpper()))
                                                 .FirstOrDefault();
             var englishTranslationToDelete = _databaseContext.GenresTranslations
-                                                .Where(gt => gt.Translation.Equals(genre.EnglishName))
+                                                .Where(gt => gt.Translation.Trim().ToUpper().Equals(genre.EnglishName.Trim().ToUpper()))
                                                 .FirstOrDefault();
 
             _databaseContext.Remove(frenchTranslationToDelete);

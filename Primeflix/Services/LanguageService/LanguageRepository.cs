@@ -22,7 +22,7 @@ namespace Primeflix.Services.LanguageService
         public async Task<bool> LanguageExists(string languageCode)
         {
             return _databaseContext.Languages
-                .Where(l => l.Code.Equals(languageCode))
+                .Where(l => l.Code.Trim().ToUpper().Equals(languageCode.Trim().ToUpper()))
                 .Any();
         }
 
@@ -50,7 +50,7 @@ namespace Primeflix.Services.LanguageService
         public async Task<Language> GetLanguage(string languageCode)
         {
             return _databaseContext.Languages
-                .Where(l => l.Code.Equals(languageCode))
+                .Where(l => l.Code.Trim().ToUpper().Equals(languageCode.Trim().ToUpper()))
                 .FirstOrDefault();
         }
 
