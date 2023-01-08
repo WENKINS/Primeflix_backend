@@ -1,6 +1,6 @@
 ﻿namespace Primeflix.DTO
 {
-    public class UserWithoutPasswordDto
+    public class UserLessDetailsDto
     {
         public int Id { get; set; }
         public string FirstName { get; set; }

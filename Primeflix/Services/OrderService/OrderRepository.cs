@@ -17,12 +17,16 @@ namespace Primeflix.Services.OrderService
 
         public async Task<bool> OrderExists(int orderId)
         {
-            return _databaseContext.Orders.Where(o => o.Id == orderId).Any();
+            return _databaseContext.Orders
+                .Where(o => o.Id == orderId)
+                .Any();
         }
 
         public async Task<bool> IsDuplicate(int orderId, int userId)
         {
-            var order = _databaseContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).Any();
+            var order = _databaseContext.Orders
+                .Where(o => o.Id == orderId && o.UserId == userId)
+                .Any();
             return order;
         }
 
@@ -33,29 +37,43 @@ namespace Primeflix.Services.OrderService
 
         public async Task<Order> GetOrder(int orderId)
         {
-            return _databaseContext.Orders.Where(o => o.Id == orderId).FirstOrDefault();
+            return _databaseContext.Orders
+                .Where(o => o.Id == orderId)
+                .FirstOrDefault();
         }
 
         public async Task<ICollection<OrderDetails>> GetOrderDetails(int orderId)
         {
-            return _databaseContext.OrderDetails.Where(od => od.OrderId == orderId).ToList();
+            return _databaseContext.OrderDetails
+                .Where(od => od.OrderId == orderId)
+                .ToList();
         }
 
         public async Task<ICollection<Order>> GetOrdersOfAUser(int userId)
         {
-            return _databaseContext.Orders.Where(o => o.UserId == userId).ToList();
+            return _databaseContext.Orders
+                .Where(o => o.UserId == userId)
+                .ToList();
         }
 
         public async Task<bool> PlaceOrder(int cartId)
         {
-            var user = _databaseContext.Carts.Where(c => c.Id == cartId).Select(c => c.User).FirstOrDefault();
+            var user = _databaseContext.Carts
+                .Where(c => c.Id == cartId)
+                .Select(c => c.User)
+                .FirstOrDefault();
+
             var cartItems = await _cartRepository.GetProductsOfACart(cartId);
+
             float totalPrice = 0;
+
             var orderDetails = new List<OrderDetails>();
 
             foreach (var cartItem in cartItems)
             {
-                var product = _databaseContext.Products.Where(p => p.Id == cartItem.ProductId).FirstOrDefault();
+                var product = _databaseContext.Products
+                    .Where(p => p.Id == cartItem.ProductId)
+                    .FirstOrDefault();
                 totalPrice = totalPrice + (float)(cartItem.Quantity * product.Price);
             }
 
@@ -68,8 +86,6 @@ namespace Primeflix.Services.OrderService
 
             _databaseContext.Add(order);
             await Save();
-
-            order = _databaseContext.Orders.Where(o => o.UserId == user.Id).FirstOrDefault();
 
             foreach (var cartItem in cartItems)
             {

@@ -10,7 +10,10 @@ namespace Primeflix.Services.FacebookService
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
 
-        public FacebookRepository(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public FacebookRepository(
+            IHttpClientFactory httpClientFactory, 
+            IConfiguration configuration
+            )
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
@@ -18,6 +21,7 @@ namespace Primeflix.Services.FacebookService
 
         public async Task<FacebookUserInfoResult> GetUserInfo(string accessToken)
         {
+            // Get the Facebook user's first name, last name and email.
             var formattedUrl = string.Format(UserInfoUrl, accessToken);
 
             var result = await _httpClientFactory.CreateClient().GetAsync(formattedUrl);
@@ -30,6 +34,7 @@ namespace Primeflix.Services.FacebookService
 
         public async Task<FacebookTokenValidationResult> ValidateAccessToken(string accessToken)
         {
+            // Checks whether the access_token was a token that was sent to Primeflix's frontend
             var formattedUrl = string.Format(TokenValidationUrl, accessToken, _configuration.GetSection("Facebook:AppId").Value, _configuration.GetSection("Facebook:AppSecret").Value);
 
             var result = await _httpClientFactory.CreateClient().GetAsync(formattedUrl);

@@ -50,7 +50,6 @@ namespace Primeflix.Services.PaymentService
                             Name = product.Title,
                             Images = new List<string> { product.PictureUrl }
                         }
-
                     },
                     Quantity = cartItem.Quantity
                 });
@@ -74,8 +73,8 @@ namespace Primeflix.Services.PaymentService
                 },
                 LineItems = lineItems,
                 Mode = "payment",
-                SuccessUrl = "https://localhost:5000/order-success",
-                CancelUrl = "https://localhost:5000/order-success"
+                SuccessUrl = "https://localhost:8080/order-success",
+                CancelUrl = "https://localhost:8080/order-success"
             };
 
             var service = new SessionService();

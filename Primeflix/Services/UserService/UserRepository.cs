@@ -1,6 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Primeflix.Data;
-using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.FacebookService;
 using Primeflix.Services.RoleService;
@@ -45,7 +44,9 @@ namespace Primeflix.Services.UserService
 
         public async Task<IEnumerable<User>> GetUsers()
         {
-            return _databaseContext.Users.OrderBy(u => u.Email).ToList();
+            return _databaseContext.Users
+                .OrderBy(u => u.Email)
+                .ToList();
         }
 
         public async Task<User> GetUser(string email)
@@ -79,7 +80,9 @@ namespace Primeflix.Services.UserService
 
         public async Task<string> Login(string email, string password)
         {
-            var user = _databaseContext.Users.Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper())).FirstOrDefault();
+            var user = _databaseContext.Users
+                .Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper()))
+                .FirstOrDefault();
 
             if (user == null)
             {
@@ -96,7 +99,7 @@ namespace Primeflix.Services.UserService
 
         public async Task<string> LoginWithFacebook(string accessToken)
         {
-            var validatedTokenResult = await _facebookRepository.ValidateAccessToken(accessToken);
+            var validatedTokenResult = await _facebookRepository.ValidateAccessToken(accessToken); // Check if access_token was asked by Primeflix frontend
             if (!validatedTokenResult.Data.IsValid)
                 return "Invalid token";
 
@@ -104,25 +107,31 @@ namespace Primeflix.Services.UserService
 
             var user = await GetUser(userInfo.Email);
 
-            if (user == null)
+            if (user == null) // Register
             {
                 user = new User()
                 {
                     Email = userInfo.Email,
                     FirstName = userInfo.FirstName,
                     LastName = userInfo.LastName,
-                    Language = _databaseContext.Languages.Where(l => l.Name == "English").FirstOrDefault(),
-                    Role = _databaseContext.Roles.Where(r => r.Name == "client").FirstOrDefault()
+                    Language = _databaseContext.Languages
+                    .Where(l => l.Name == "English")
+                    .FirstOrDefault(),
+                    Role = _databaseContext.Roles
+                    .Where(r => r.Name == "client")
+                    .FirstOrDefault()
                 };
 
                 _databaseContext.Users.Add(user);
+
                 var result = await Save();
                 if (!result)
-                    return "";
+                    return null;
+
                 return await CreateToken(user);
             }
 
-            return await CreateToken(user);
+            return await CreateToken(user); // Login
         }
 
         public async Task<bool> UpdateUser(User user)
@@ -234,7 +243,6 @@ namespace Primeflix.Services.UserService
             {
                 passwordSalt = hmac.Key;
                 passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-
             }
         }
 

@@ -13,8 +13,8 @@ namespace Primeflix.Services.GenreService
         Task<Genre> GetGenre(string genreName);
         Task<ICollection<Genre>> GetGenresOfAProduct(int productId);
         Task<ICollection<Product>> GetProductsOfAGenre(int genreId);
-        Task<bool> CreateGenre(NewGenreDto genre);
-        Task<bool> UpdateGenre(NewGenreDto genre);
+        Task<bool> CreateGenre(GenreWithTranslationsDto genre);
+        Task<bool> UpdateGenre(GenreWithTranslationsDto genre);
         Task<bool> DeleteGenre(Genre genre);
         Task<bool> Save();
 

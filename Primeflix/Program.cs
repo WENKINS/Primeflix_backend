@@ -47,12 +47,9 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
-<<<<<<< HEAD
 builder.Services.AddScoped<IOrderStatusRepository, OrderStatusRepository>();
-=======
 builder.Services.AddScoped<IFacebookRepository, FacebookRepository>();
 builder.Services.AddHttpClient();
->>>>>>> origin/ISL-37-Facebook
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
