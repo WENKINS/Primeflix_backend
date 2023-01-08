@@ -35,7 +35,7 @@ namespace Primeflix.Controllers
         //api/users/register
         [HttpPost("register")]
         [AllowAnonymous]
-        [ProducesResponseType(201, Type = typeof(UserDto))]
+        [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
@@ -75,7 +75,7 @@ namespace Primeflix.Controllers
                 return StatusCode(500, ModelState);
             }
 
-            return CreatedAtRoute("GetUser", new { userId = user.Id }, user);
+            return StatusCode(201);
         }
 
 
@@ -128,7 +128,7 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var response = await _authentication.LoginWithFacebook(token);
+            var response = await _userRepository.LoginWithFacebook(token);
 
             if (response.Equals("Invalid token") || String.IsNullOrEmpty(response))
             {
@@ -233,7 +233,7 @@ namespace Primeflix.Controllers
         }
 
         //api/users/userId
-        [HttpGet("{userId}", Name = "GetUser")]
+        [HttpGet("{userId}")]
         [Authorize]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]

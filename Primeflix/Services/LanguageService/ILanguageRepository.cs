@@ -6,7 +6,7 @@ namespace Primeflix.Services.LanguageService
     {
         Task<bool> LanguageExists(int languageId);
         Task<bool> LanguageExists(string languageCode);
-        Task<bool> IsDuplicate(int languageId, string languageName);
+        Task<bool> IsDuplicate(string languageName);
         Task<ICollection<Language>> GetLanguages();
         Task<Language> GetLanguage(int languageId);
         Task<Language> GetLanguage(string languageCode);

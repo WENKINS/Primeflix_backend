@@ -14,38 +14,52 @@ namespace Primeflix.Services.LanguageService
 
         public async Task<bool> LanguageExists(int languageId)
         {
-            return _databaseContext.Languages.Any(l => l.Id == languageId);
+            return _databaseContext.Languages
+                .Where(l => l.Id == languageId)
+                .Any();
         }
 
         public async Task<bool> LanguageExists(string languageCode)
         {
-            return _databaseContext.Languages.Any(l => l.Code.Equals(languageCode));
+            return _databaseContext.Languages
+                .Where(l => l.Code.Equals(languageCode))
+                .Any();
         }
 
-        public async Task<bool> IsDuplicate(int languageId, string languageName)
+        public async Task<bool> IsDuplicate(string languageName)
         {
-            var language = _databaseContext.Languages.Where(l => l.Name.Trim().ToUpper() == languageName.Trim().ToUpper() && l.Id != languageId).FirstOrDefault();
+            var language = _databaseContext.Languages
+                .Where(l => l.Name.Trim().ToUpper().Equals(languageName.Trim().ToUpper())).FirstOrDefault();
             return language == null ? false : true;
         }
 
         public async Task<ICollection<Language>> GetLanguages()
         {
-            return _databaseContext.Languages.OrderBy(l => l.Name).ToList();
+            return _databaseContext.Languages
+                .OrderBy(l => l.Name)
+                .ToList();
         }
 
         public async Task<Language> GetLanguage(int languageId)
         {
-            return _databaseContext.Languages.Where(l => l.Id == languageId).FirstOrDefault();
+            return _databaseContext.Languages
+                .Where(l => l.Id == languageId)
+                .FirstOrDefault();
         }
 
         public async Task<Language> GetLanguage(string languageCode)
         {
-            return _databaseContext.Languages.Where(l => l.Code == languageCode).FirstOrDefault();
+            return _databaseContext.Languages
+                .Where(l => l.Code.Equals(languageCode))
+                .FirstOrDefault();
         }
 
         public async Task<Language> GetLanguageOfAUser(int userId)
         {
-            return _databaseContext.Users.Where(u => u.Id == userId).Select(u => u.Language).FirstOrDefault();
+            return _databaseContext.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.Language)
+                .FirstOrDefault();
         }
 
         public async Task<bool> CreateLanguage(Language language)

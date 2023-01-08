@@ -12,46 +12,62 @@ namespace Primeflix.Services.FormatService
             _databaseContext = databaseContext;
         }
 
-
         public async Task<bool> FormatExists(int formatId)
         {
-            return _databaseContext.Formats.Any(f => f.Id == formatId);
+            return _databaseContext.Formats
+                .Where(f => f.Id == formatId)
+                .Any();
         }
 
         public async Task<bool> FormatExists(string formatName)
         {
-            return _databaseContext.Formats.Any(f => f.Name.Equals(formatName));
+            return _databaseContext.Formats
+                .Where(f => f.Name.Equals(formatName))
+                .Any();
         }
 
         public async Task<bool> IsDuplicate(string formatName)
         {
-            var format = _databaseContext.Formats.Where(f => f.Name.Trim().ToUpper() == formatName.Trim().ToUpper()).FirstOrDefault();
+            var format = _databaseContext.Formats
+                .Where(f => f.Name.Trim().ToUpper() == formatName.Trim().ToUpper())
+                .FirstOrDefault();
             return format == null ? false : true;
         }
 
         public async Task<ICollection<Format>> GetFormats()
         {
-            return _databaseContext.Formats.OrderBy(f => f.Name).ToList();
+            return _databaseContext.Formats
+                .OrderBy(f => f.Name)
+                .ToList();
         }
 
         public async Task<Format> GetFormat(int formatId)
         {
-            return _databaseContext.Formats.Where(f => f.Id == formatId).FirstOrDefault();
+            return _databaseContext.Formats
+                .Where(f => f.Id == formatId)
+                .FirstOrDefault();
         }
 
         public async Task<Format> GetFormat(string formatName)
         {
-            return _databaseContext.Formats.Where(f => f.Name == formatName).FirstOrDefault();
+            return _databaseContext.Formats
+                .Where(f => f.Name.Equals(formatName))
+                .FirstOrDefault();
         }
 
         public async Task<Format> GetFormatOfAProduct(int productId)
         {
-            return _databaseContext.Products.Where(p => p.Id == productId).Select(p => p.Format).FirstOrDefault();
+            return _databaseContext.Products
+                .Where(p => p.Id == productId)
+                .Select(p => p.Format)
+                .FirstOrDefault();
         }
 
         public async Task<ICollection<Product>> GetProductsOfAFormat(int formatId)
         {
-            return _databaseContext.Products.Where(p => p.FormatId == formatId).ToList();
+            return _databaseContext.Products
+                .Where(p => p.FormatId == formatId)
+                .ToList();
         }
 
         public async Task<bool> CreateFormat(Format format)

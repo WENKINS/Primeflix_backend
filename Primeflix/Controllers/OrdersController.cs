@@ -62,7 +62,7 @@ namespace Primeflix.Controllers
             {
                 var user = await _authentication.GetUser(order.UserId);
 
-                var userDto = new UserWithoutPasswordDto()
+                var userDto = new UserLessDetailsDto()
                 {
                     Id = user.Id,
                     FirstName = user.FirstName,

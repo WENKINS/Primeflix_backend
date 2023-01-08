@@ -174,7 +174,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> CreateGenre([FromBody]NewGenreDto genreToCreate)
+        public async Task<IActionResult> CreateGenre([FromBody]GenreWithTranslationsDto genreToCreate)
         {
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
@@ -216,7 +216,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> UpdateGenre(int genreId, [FromBody]NewGenreDto updatedGenre)
+        public async Task<IActionResult> UpdateGenre(int genreId, [FromBody]GenreWithTranslationsDto updatedGenre)
         {
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 

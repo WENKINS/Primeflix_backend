@@ -16,7 +16,11 @@ namespace Primeflix.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IProductRepository _productRepository;
 
-        public CartsController(ICartRepository cartRepository, IUserRepository userRepository, IProductRepository productRepository)
+        public CartsController(
+            ICartRepository cartRepository, 
+            IUserRepository userRepository, 
+            IProductRepository productRepository
+            )
         {
             _cartRepository = cartRepository;
             _userRepository = userRepository;
@@ -34,58 +38,21 @@ namespace Primeflix.Controllers
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
+
+            var carts = new List<Cart>();
 
             if (userRole.Equals("admin"))
             {
-                var carts = await _cartRepository.GetCarts();
+                carts = (List<Cart>)await _cartRepository.GetCarts();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
-
-                var cartsDto = new List<CartDto>();
-
-                foreach (var cart in carts)
-                {
-                    var user = await _userRepository.GetUser(cart.UserId);
-
-                    var userDto = new UserWithoutPasswordDto()
-                    {
-                        Id = user.Id,
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                        Phone = user.Phone,
-                        Email = user.Email,
-                    };
-
-                    var products = await _cartRepository.GetProductsOfACart(cart.Id);
-                    var productsDto = new List<CartProductWithTitleDto>();
-
-                    foreach (var product in products)
-                    {
-                        var productInfo = await _productRepository.GetProduct(product.ProductId);
-
-                        productsDto.Add(new CartProductWithTitleDto
-                        {
-                            Id = productInfo.Id,
-                            Title = productInfo.Title,
-                            Price = productInfo.Price,
-                            Quantity = product.Quantity
-                        });
-                    }
-
-                    cartsDto.Add(new CartDto
-                    {
-                        Id = cart.Id,
-                        User = userDto,
-                        Products = productsDto
-                    });
-                }
-                return Ok(cartsDto);
             }
 
             else
             {
+                // If user not an admin, they get to see their own cart only
                 var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
                 if (userId == null || userId == 0)
@@ -94,14 +61,16 @@ namespace Primeflix.Controllers
                 if (!await _cartRepository.CartOfAUserExists(userId))
                     return NotFound();
 
-                var cart = await _cartRepository.GetCartOfAUser(userId);
+                carts.Add(await _cartRepository.GetCartOfAUser(userId));
+            }
 
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+            var cartsDto = new List<CartDto>();
 
-                var user = await _userRepository.GetUser(userId);
+            foreach (var cart in carts)
+            {
+                var user = await _userRepository.GetUser(cart.UserId);
 
-                var userDto = new UserWithoutPasswordDto()
+                var userDto = new UserLessDetailsDto()
                 {
                     Id = user.Id,
                     FirstName = user.FirstName,
@@ -126,15 +95,15 @@ namespace Primeflix.Controllers
                     });
                 }
 
-                var cartDto = new CartDto()
+                cartsDto.Add(new CartDto
                 {
                     Id = cart.Id,
                     User = userDto,
                     Products = productsDto
-                };
-
-                return Ok(cartDto);
+                });
             }
+
+            return Ok(cartsDto);
         }
 
         //api/carts
@@ -149,89 +118,35 @@ namespace Primeflix.Controllers
             var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
-                return BadRequest();
+                return BadRequest("User role could not be retrieved");
 
             if (!userRole.Equals("admin"))
-            {
-                ModelState.AddModelError("", "User is not an admin");
-                return StatusCode(401, ModelState);
-            }
+                return StatusCode(401, "User is not an admin");
 
             if (products == null)
-                return BadRequest();
+                return BadRequest("No product was provided to add to the cart");
 
             var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null || userId == 0)
-                return BadRequest();
+                return BadRequest("User ID could not be retrieved");
 
             if (!(await _cartRepository.CartExists(userId)))
                 await _cartRepository.CreateCart(userId);
 
-            if(!(await _cartRepository.EmptyCart(userId)))
-            {
-                ModelState.AddModelError("", $"Something went wrong adding product to cart");
-                return StatusCode(500, ModelState);
-            }
+            if (!(await _cartRepository.EmptyCart(userId))) // We empty the cart first, before adding all the products
+                return StatusCode(500, "Something went wrong adding the product(s) to the cart");
 
             foreach (var product in products)
             {
-                if(!await _productRepository.ProductExists(product.ProductId))
-                {
-                    ModelState.AddModelError("", $"Product {product.ProductId} does not exist");
-                    return StatusCode(404, ModelState);
-                }
+                if (!await _productRepository.ProductExists(product.ProductId))
+                    return StatusCode(404, "Product doesn't exist");
+
                 if (!await _cartRepository.AddProductToCart(userId, product.ProductId, product.Quantity))
-                {
-                    ModelState.AddModelError("", $"Something went wrong adding product to cart");
-                    return StatusCode(500, ModelState);
-                }
+                    return StatusCode(500, "Something went wrong adding the product(s) to the cart");
             }
 
             return await GetCart();
-        }
-
-        //api/carts
-        [HttpDelete()]
-        [Authorize]
-        [ProducesResponseType(204)] // no content
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(422)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> DeleteCart()
-        {
-            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
-
-            if (userRole == null)
-                return BadRequest();
-
-            if (!userRole.Equals("admin"))
-            {
-                ModelState.AddModelError("", "User is not an admin");
-                return StatusCode(401, ModelState);
-            }
-
-            var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
-
-            if (userId == null || userId == 0)
-                return BadRequest();
-
-            if (!await _cartRepository.CartOfAUserExists(userId))
-                return NotFound();
-
-            var cartToDelete = await _cartRepository.GetCartOfAUser(userId);
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (!await _cartRepository.DeleteCart(cartToDelete))
-            {
-                ModelState.AddModelError("", $"Something went wrong deleting the cart");
-                return StatusCode(500, ModelState);
-            }
-
-            return NoContent();
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Primeflix.Controllers
             var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null || userId == 0)
-                return BadRequest();
+                return BadRequest("User ID could not be retrieved");
 
             var address = await _addressRepository.GetAddressOfAUser(userId);
             if (address == null)
@@ -43,7 +43,6 @@ namespace Primeflix.Controllers
                 PostalCode = address.PostalCode,
                 City = address.City,
                 Country = address.Country
-
             };
 
             return Ok(addressDto);
@@ -60,7 +59,7 @@ namespace Primeflix.Controllers
             var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null || userId == 0)
-                return BadRequest();
+                return BadRequest("User ID could not be found");
 
             var address = await _addressRepository.GetAddressOfAUser(userId);
 
@@ -76,19 +75,14 @@ namespace Primeflix.Controllers
                 };
 
                 if(!(await _addressRepository.CreateAddress(newAddress)))
-                {
-                    ModelState.AddModelError("", "Something went wrong adding the user's address");
-                    return StatusCode(500, ModelState);
-                }
+                    return StatusCode(500, "Something went wrong adding the user's address");
 
                 var user = await _userRepository.GetUser(userId);
                 user.Address = newAddress;
 
                 if (!(await _userRepository.UpdateUser(user)))
-                {
-                    ModelState.AddModelError("", "Something went wrong adding the user's address");
-                    return StatusCode(500, ModelState);
-                }
+                    return StatusCode(500, "Something went wrong adding the user's address");
+
                 return StatusCode(201);
             }
 
@@ -99,11 +93,9 @@ namespace Primeflix.Controllers
                 address.PostalCode = addressDto.PostalCode;
                 address.City = addressDto.City;
                 address.Country = addressDto.Country;
+
                 if (!(await _addressRepository.UpdateAddress(address)))
-                {
-                    ModelState.AddModelError("", "Something went wrong updating the user's address");
-                    return StatusCode(500, ModelState);
-                }
+                    return StatusCode(500, "Something went wrong updating the user's address");
 
                 return StatusCode(204);
             }

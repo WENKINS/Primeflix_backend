@@ -8,7 +8,6 @@ using Primeflix.Services.GenreTranslationService;
 using Primeflix.Services.LanguageService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
-using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
@@ -22,7 +21,6 @@ namespace Primeflix.Controllers
         private readonly IFormatRepository _formatRepository;
         private readonly IGenreTranslationRepository _genreTranslationRepository;
         private readonly IProductTranslationRepository _productTranslationRepository;
-        private readonly IUserRepository _userRepository;
         private readonly ILanguageRepository _languageRepository;
 
         public ActorsController(
@@ -32,7 +30,6 @@ namespace Primeflix.Controllers
             IFormatRepository formatRepository,
             IGenreTranslationRepository genreTranslationRepository,
             IProductTranslationRepository productTranslationRepository,
-            IUserRepository userRepository,
             ILanguageRepository languageRepository
             )
         {
@@ -42,7 +39,6 @@ namespace Primeflix.Controllers
             _formatRepository = formatRepository;
             _genreTranslationRepository = genreTranslationRepository;
             _productTranslationRepository = productTranslationRepository;
-            _userRepository = userRepository;
             _languageRepository = languageRepository;
         }
 
@@ -133,16 +129,13 @@ namespace Primeflix.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public async Task<IActionResult> GetProductsOfAnActor(int celebrityId, [FromQuery] string lang)
+        public async Task<IActionResult> GetProductsOfAnActor(int celebrityId, [FromQuery] string? lang = "en")
         {
             if (!await _celebrityRepository.ActorExists(celebrityId))
                 return NotFound();
 
             if (!(await _languageRepository.LanguageExists(lang)))
-            {
-                ModelState.AddModelError("", $"Language doesn't exist");
-                return StatusCode(500, ModelState);
-            }
+                return BadRequest("Language doesn't exist");
 
             var products = await _celebrityRepository.GetProductsOfAnActor(celebrityId);
 
@@ -192,11 +185,11 @@ namespace Primeflix.Controllers
                     });
                 }
 
-                var oFormat = await _formatRepository.GetFormatOfAProduct(product.Id);
+                var format = await _formatRepository.GetFormatOfAProduct(product.Id);
                 var formatDto = new FormatDto()
                 {
-                    Id = oFormat.Id,
-                    Name = oFormat.Name
+                    Id = format.Id,
+                    Name = format.Name
                 };
 
                 var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, lang);

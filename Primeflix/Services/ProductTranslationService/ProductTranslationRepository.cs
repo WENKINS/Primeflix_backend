@@ -14,12 +14,16 @@ namespace Primeflix.Services.ProductTranslationService
 
         public async Task<bool> ProductTranslationExists(int productId, int languageId)
         {
-            return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.LanguageId == languageId).Any();
+            return _databaseContext.ProductsTranslations
+                .Where(pt => pt.ProductId == productId && pt.LanguageId == languageId)
+                .Any();
         }
 
         public async Task<bool> IsDuplicate(int productId, int languageId)
         {
-            var productTranslation = _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.LanguageId == languageId).FirstOrDefault();
+            var productTranslation = _databaseContext.ProductsTranslations
+                .Where(pt => pt.ProductId == productId && pt.LanguageId == languageId)
+                .FirstOrDefault();
             return productTranslation == null ? false : true;
         }
 
@@ -30,17 +34,23 @@ namespace Primeflix.Services.ProductTranslationService
 
         public async Task<ProductTranslation> GetProductTranslation(int productId, string languageCode)
         {
-            return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.Language.Code == languageCode).FirstOrDefault();
+            return _databaseContext.ProductsTranslations
+                .Where(pt => pt.ProductId == productId && pt.Language.Code.Equals(languageCode))
+                .FirstOrDefault();
         }
 
         public async Task<ICollection<ProductTranslation>> GetTranslationsOfAProduct(int productId)
         {
-            return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId).ToList();
+            return _databaseContext.ProductsTranslations
+                .Where(pt => pt.ProductId == productId)
+                .ToList();
         }
 
         public async Task<ICollection<ProductTranslation>> GetProductsOfALanguage(int languageId)
         {
-            return _databaseContext.ProductsTranslations.Where(pt => pt.LanguageId == languageId).ToList();
+            return _databaseContext.ProductsTranslations
+                .Where(pt => pt.LanguageId == languageId)
+                .ToList();
         }
 
         public async Task<bool> CreateProductTranslation(ProductTranslation productTranslation)

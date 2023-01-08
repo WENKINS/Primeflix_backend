@@ -20,23 +20,32 @@ namespace Primeflix.Services.RoleService
 
         public async Task<bool> IsDuplicate(string name)
         {
-            var role = _databaseContext.Roles.Where(r => r.Name.Trim().ToUpper() == name.Trim().ToUpper()).FirstOrDefault();
+            var role = _databaseContext.Roles
+                .Where(r => r.Name.Trim().ToUpper() == name.Trim().ToUpper())
+                .FirstOrDefault();
             return role == null ? false : true;
         }
 
         public async Task<ICollection<Role>> GetRoles()
         {
-            return _databaseContext.Roles.OrderBy(r => r.Name).ToList();
+            return _databaseContext.Roles
+                .OrderBy(r => r.Name)
+                .ToList();
         }
 
         public async Task<Role> GetRole(int roleId)
         {
-            return _databaseContext.Roles.Where(r => r.Id == roleId).FirstOrDefault();
+            return _databaseContext.Roles
+                .Where(r => r.Id == roleId)
+                .FirstOrDefault();
         }
 
         public async Task<Role> GetRoleOfAUser(int userId)
         {
-            return _databaseContext.Users.Where(u => u.Id == userId).Select(u => u.Role).FirstOrDefault();
+            return _databaseContext.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.Role)
+                .FirstOrDefault();
         }
 
         public async Task<bool> CreateRole(Role role)

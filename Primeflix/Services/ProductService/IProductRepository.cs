@@ -7,7 +7,7 @@ namespace Primeflix.Services.ProductService
     {
         Task<bool> ProductExists(int productId);
         Task<bool> ProductExists(string title);
-        Task<bool> IsDuplicate(int productId, string productTitle);
+        Task<bool> IsDuplicate(ICollection<string> titles, ICollection<int> directorsId);
         Task<ICollection<Product>> GetProducts();
         Task<Product> GetProduct(int productId);
         Task<Product> GetProduct(string title);

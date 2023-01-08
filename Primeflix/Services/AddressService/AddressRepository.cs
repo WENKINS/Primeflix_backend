@@ -13,12 +13,18 @@ namespace Primeflix.Services.Address
 
         public async Task<bool> AddressOfAUserExists(int userId)
         {
-            return _databaseContext.Users.Where(u => u.Id == userId).Select(u => u.Address).Any();
+            return _databaseContext.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.Address)
+                .Any();
         }
 
         public async Task<Models.Address> GetAddressOfAUser(int userId)
         {
-            return _databaseContext.Users.Where(u => u.Id == userId).Select(u => u.Address).FirstOrDefault();
+            return _databaseContext.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.Address)
+                .FirstOrDefault();
         }
 
         public async Task<bool> CreateAddress(Models.Address address)

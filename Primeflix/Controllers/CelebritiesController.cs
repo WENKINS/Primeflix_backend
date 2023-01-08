@@ -96,7 +96,7 @@ namespace Primeflix.Controllers
             if (celebrityToCreate == null)
                 return BadRequest(ModelState);
 
-            if (await _celebrityRepository.CelebrityExists(celebrityToCreate))
+            if (await _celebrityRepository.CelebrityExists(celebrityToCreate.FirstName, celebrityToCreate.LastName))
             {
                 ModelState.AddModelError("", $"Celebrity {celebrityToCreate.FirstName} {celebrityToCreate.LastName} already exists");
                 return StatusCode(422, ModelState);

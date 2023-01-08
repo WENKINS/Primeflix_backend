@@ -16,28 +16,49 @@ namespace Primeflix.Services.ProductService
 
         public async Task<bool> ProductExists(int productId)
         {
-            return _databaseContext.Products.Any(p => p.Id == productId);
+            return _databaseContext.Products
+                .Where(p => p.Id == productId)
+                .Any();
         }
 
         public async Task<bool> ProductExists(string title)
         {
-            return _databaseContext.Products.Any(p => p.Title == title);
+            return _databaseContext.ProductsTranslations
+                .Where(pt => pt.Title == title)
+                .Any();
+
         }
 
-        public async Task<bool> IsDuplicate(int productId, string productTitle)
+        public async Task<bool> IsDuplicate(ICollection<string> titles, ICollection<int> directorsId)
         {
-            var product = _databaseContext.Products.Where(p => p.Title.Trim().ToUpper() == productTitle.Trim().ToUpper() && p.Id != productId).FirstOrDefault();
-            if (product != null)
+            // Multiple products can have the same title, but not the the same title AND the same director
+            foreach(var title in titles)
             {
-                // IMPLEMENT DIRECTOR NAME COMPARISON (ADD METHOD MAYBE?)
-                return true;
+                if (_databaseContext.Products
+                    .Where(p => p.Title.Trim().ToUpper().Equals(title.Trim().ToUpper()))
+                    .Any())
+                {
+                    var product = _databaseContext.Products
+                    .Where(p => p.Title.Trim().ToUpper().Equals(title.Trim().ToUpper()))
+                    .FirstOrDefault();
+
+                    foreach(var directorId in directorsId)
+                    {
+                        if (_databaseContext.Directors
+                        .Where(d => d.ProductId == product.Id && d.CelebrityId == directorId)
+                        .Any())
+                        return true;
+                    }
+                }
+                return false;
             }
             return false;
         }
 
         public async Task<ICollection<Product>> GetProducts()
         {
-            return _databaseContext.Products.OrderBy(p => p.Title)
+            return _databaseContext.Products
+                .OrderBy(p => p.Title)
                 .Include(p => p.DirectorsMovies)
                 .Include(p => p.ActorsMovies)
                 .Include(p => p.ProductGenre)
@@ -46,12 +67,16 @@ namespace Primeflix.Services.ProductService
 
         public async Task<Product> GetProduct(int productId)
         {
-            return _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
+            return _databaseContext.Products
+                .Where(p => p.Id == productId)
+                .FirstOrDefault();
         }
 
         public async Task<Product> GetProduct(string title)
         {
-            return _databaseContext.Products.Where(p => p.Title == title).FirstOrDefault();
+            return _databaseContext.Products
+                .Where(p => p.Title == title)
+                .FirstOrDefault();
         }
 
         public async Task<ICollection<Product>> FilterResults(bool recentlyAdded, int formatId, List<int> genresId)
@@ -69,7 +94,6 @@ namespace Primeflix.Services.ProductService
                             products.AddRange(_databaseContext.ProductsGenres
                                 .Where(g => g.GenreId == genreId)
                                 .Select(p => p.Product)
-                                .OrderBy(p => p.Title)
                                 .OrderByDescending(p => p.CreatedAt)
                                 .Take(20)
                                 .ToList());
@@ -85,32 +109,7 @@ namespace Primeflix.Services.ProductService
                         }
                     }
 
-                    if (formatId == 1)
-                    {
-                        if (recentlyAdded)
-                        {
-                            products.AddRange(_databaseContext.ProductsGenres
-                                .Where(g => g.GenreId == genreId)
-                                .Select(p => p.Product)
-                                .OrderBy(p => p.Title)
-                                .Where(p => p.FormatId == formatId)
-                                .OrderByDescending(p => p.CreatedAt)
-                                .Take(20)
-                                .ToList());
-                        }
-
-                        else
-                        {
-                            products.AddRange(_databaseContext.ProductsGenres
-                                .Where(g => g.GenreId == genreId)
-                                .Select(p => p.Product)
-                                .OrderBy(p => p.Title)
-                                .Where(p => p.FormatId == formatId)
-                                .ToList());
-                        }
-                    }
-                    
-                    if (formatId == 2)
+                    else
                     {
                         if (recentlyAdded)
                         {
@@ -158,7 +157,7 @@ namespace Primeflix.Services.ProductService
                         .ToList();
                 }
 
-                if (formatId == 1)
+                else
                 {
                     if (recentlyAdded)
                     {
@@ -169,25 +168,6 @@ namespace Primeflix.Services.ProductService
                             .Take(20)
                             .ToList();
 
-                        return products;
-                    }
-
-                    products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                        .Include(p => p.ProductGenre)
-                        .Where(p => p.FormatId == formatId)
-                        .ToList();
-                    return products;
-                }
-
-                if (formatId == 2)
-                {
-                    if (recentlyAdded)
-                    {
-                        products = (List<Product>)_databaseContext.Products.OrderBy(p => p.Title)
-                            .Include(p => p.ProductGenre)
-                            .Where(p => p.FormatId == formatId)
-                            .Take(3)
-                            .ToList();
                         return products;
                     }
 
@@ -261,14 +241,28 @@ namespace Primeflix.Services.ProductService
 
         public async Task<bool> UpdateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId)
         {
-            var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();
-            var actors = _databaseContext.Celebrities.Where(c => actorsId.Contains(c.Id)).ToList();
-            var genres = _databaseContext.Genres.Where(g => genresId.Contains(g.Id)).ToList();
+            var directors = _databaseContext.Celebrities
+                .Where(c => directorsId.Contains(c.Id))
+                .ToList();
+            var actors = _databaseContext.Celebrities
+                .Where(c => actorsId.Contains(c.Id))
+                .ToList();
+            var genres = _databaseContext.Genres
+                .Where(g => genresId.Contains(g.Id))
+                .ToList();
 
-            var productDirectorsToDelete = _databaseContext.Directors.Where(d => d.ProductId == product.Id);
-            var productActorsToDelete = _databaseContext.Actors.Where(a => a.ProductId == product.Id);
-            var productGenresToDelete = _databaseContext.ProductsGenres.Where(g => g.ProductId == product.Id);
-            var translationsToDelete = _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == product.Id);
+            var productDirectorsToDelete = _databaseContext.Directors
+                .Where(d => d.ProductId == product.Id)
+                .ToList();
+            var productActorsToDelete = _databaseContext.Actors
+                .Where(a => a.ProductId == product.Id)
+                .ToList();
+            var productGenresToDelete = _databaseContext.ProductsGenres
+                .Where(g => g.ProductId == product.Id)
+                .ToList();
+            var translationsToDelete = _databaseContext.ProductsTranslations
+                .Where(pt => pt.ProductId == product.Id)
+                .ToList();
 
             _databaseContext.RemoveRange(productDirectorsToDelete);
             _databaseContext.RemoveRange(productActorsToDelete);

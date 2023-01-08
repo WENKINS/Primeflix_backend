@@ -53,7 +53,7 @@ namespace Primeflix.Controllers
         [AllowAnonymous]
         [HttpGet(Name = "GetProducts")]
         [ProducesResponseType(400)]
-        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDto>))]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<ProductLessDetailsDto>))]
         public async Task<IActionResult> GetProducts([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? lang = "en", [FromQuery] bool recentlyAdded = false, [FromQuery] string? format = "All", [FromQuery] List<string>? genre = null)
         {
             if (pageSize <= 0)
@@ -618,6 +618,13 @@ namespace Primeflix.Controllers
                     ModelState.AddModelError("", "Celebrity Not Found");
                     return StatusCode(404);
                 }
+            }
+
+            var titles = new List<string> { product.FrenchTitle, product.EnglishTitle };
+            if (await _productRepository.IsDuplicate(titles, product.DirectorsId))
+            {
+                ModelState.AddModelError("", "Product already exists");
+                return StatusCode(409);
             }
 
             foreach (var id in product.ActorsId)
