@@ -81,7 +81,7 @@ namespace Primeflix.Controllers
 
         //api/users/login
         [AllowAnonymous]
-        [ProducesResponseType(201, Type = typeof(UserDto))]
+        [ProducesResponseType(201, Type = typeof(string))]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(422)]
@@ -106,6 +106,33 @@ namespace Primeflix.Controllers
             if (response == null)
             {
                 ModelState.AddModelError("", "Wrong password");
+                return StatusCode(401, ModelState);
+            }
+
+            return Ok(response);
+        }
+
+        //api/users/login/facebook
+        [AllowAnonymous]
+        [ProducesResponseType(201, Type = typeof(string))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        [HttpPost("login/facebook")]
+        public async Task<IActionResult> Login([FromBody]string token)
+        {
+            if (String.IsNullOrEmpty(token))
+                return BadRequest(ModelState);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var response = await _authentication.LoginWithFacebook(token);
+
+            if (response.Equals("Invalid token") || String.IsNullOrEmpty(response))
+            {
+                ModelState.AddModelError("", "Wrong access token provided");
                 return StatusCode(401, ModelState);
             }
 

@@ -12,6 +12,7 @@ namespace Primeflix.Services.UserService
         Task<User> GetUser(int userId);
         Task<bool> Register(User user, string password);
         Task<string> Login(string email, string password);
+        Task<string> LoginWithFacebook(string accessToken);
         Task<bool> UpdateUser(User user);
         Task<bool> DeleteUser(User user);
         Task<bool> Save();
