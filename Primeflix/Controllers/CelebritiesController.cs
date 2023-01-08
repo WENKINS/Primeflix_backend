@@ -1,23 +1,30 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.CelebrityService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CelebritiesController : Controller
+    public class CelebritiesController : ControllerBase
     {
-        private ICelebrityRepository _celebrityRepository;
+        private readonly ICelebrityRepository _celebrityRepository;
+        private readonly IUserRepository _userRepository;
 
-        public CelebritiesController(ICelebrityRepository celebrityRepository)
+        public CelebritiesController(
+            ICelebrityRepository celebrityRepository,
+            IUserRepository userRepository)
         {
             _celebrityRepository = celebrityRepository;
+            _userRepository = userRepository;
         }
 
         //api/celebrities
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
         public async Task<IActionResult> GetCelebrities()
@@ -42,6 +49,7 @@ namespace Primeflix.Controllers
 
         //api/celebrities/celebrityId
         [HttpGet("{celebrityId}", Name = "GetCelebrity")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
@@ -67,12 +75,24 @@ namespace Primeflix.Controllers
 
         //api/celebrities
         [HttpPost]
+        [Authorize]
         [ProducesResponseType(201, Type = typeof(Celebrity))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> CreateCelebrity([FromBody] Celebrity celebrityToCreate)
         {
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
             if (celebrityToCreate == null)
                 return BadRequest(ModelState);
 
@@ -96,6 +116,7 @@ namespace Primeflix.Controllers
 
         //api/celebrities/celebrityId
         [HttpPut("{celebrityId}")]
+        [Authorize]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -103,6 +124,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> UpdateCelebrity(int celebrityId, [FromBody] Celebrity updatedCelebrity)
         {
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
             if (updatedCelebrity == null)
                 return BadRequest(ModelState);
 
@@ -112,9 +144,7 @@ namespace Primeflix.Controllers
             if (!await _celebrityRepository.CelebrityExists(celebrityId))
                 return NotFound();
 
-            bool test = await _celebrityRepository.IsDuplicate(celebrityId, updatedCelebrity.FirstName, updatedCelebrity.LastName);
-
-            if (test)
+            if (await _celebrityRepository.IsDuplicate(updatedCelebrity.FirstName, updatedCelebrity.LastName))
             {
                 ModelState.AddModelError("", $"Celebrity {updatedCelebrity.FirstName} {updatedCelebrity.LastName} already exists");
                 return StatusCode(422, ModelState);
@@ -134,6 +164,7 @@ namespace Primeflix.Controllers
 
         //api/celebrities/celebrityId
         [HttpDelete("{celebrityId}")]
+        [Authorize]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -142,6 +173,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteCelebrity(int celebrityId)
         {
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
             if (!await _celebrityRepository.CelebrityExists(celebrityId))
                 return NotFound();
 

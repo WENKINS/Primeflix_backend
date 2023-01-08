@@ -7,64 +7,51 @@ namespace Primeflix.Services.ProductService
 {
     public class ProductRepository : IProductRepository
     {
-        private DatabaseContext _databaseContext;
+        private readonly DatabaseContext _databaseContext;
 
         public ProductRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext;
         }
 
-        public async Task<bool> CreateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId)
+        public async Task<bool> ProductExists(int productId)
         {
-            var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();
-            var actors = _databaseContext.Celebrities.Where(c => actorsId.Contains(c.Id)).ToList();
-            var genres = _databaseContext.Genres.Where(g => genresId.Contains(g.Id)).ToList();
-
-            foreach(var director in directors)
-            {
-                var productDirector = new Director()
-                {
-                    Celebrity = director,
-                    Product = product
-                };
-                _databaseContext.Add(productDirector);
-            }
-
-            foreach (var actor in actors)
-            {
-                var productActor = new Actor()
-                {
-                    Celebrity = actor,
-                    Product = product
-                };
-                _databaseContext.Add(productActor);
-            }
-
-            foreach (var genre in genres)
-            {
-                var productGenre = new ProductGenre()
-                {
-                    Genre = genre,
-                    Product = product
-                };
-                _databaseContext.Add(productGenre);
-            }
-
-            foreach (var translation in translations)
-            {
-                translation.Product = product;
-                _databaseContext.Add(translation);
-            }
-
-            _databaseContext.Add(product);
-
-            return await Save();
+            return _databaseContext.Products.Any(p => p.Id == productId);
         }
 
-        public async Task<bool> DeleteProduct(Product product)
+        public async Task<bool> ProductExists(string title)
         {
-            _databaseContext.Remove(product);
-            return await Save();
+            return _databaseContext.Products.Any(p => p.Title == title);
+        }
+
+        public async Task<bool> IsDuplicate(int productId, string productTitle)
+        {
+            var product = _databaseContext.Products.Where(p => p.Title.Trim().ToUpper() == productTitle.Trim().ToUpper() && p.Id != productId).FirstOrDefault();
+            if (product != null)
+            {
+                // IMPLEMENT DIRECTOR NAME COMPARISON (ADD METHOD MAYBE?)
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<ICollection<Product>> GetProducts()
+        {
+            return _databaseContext.Products.OrderBy(p => p.Title)
+                .Include(p => p.DirectorsMovies)
+                .Include(p => p.ActorsMovies)
+                .Include(p => p.ProductGenre)
+                .ToList();
+        }
+
+        public async Task<Product> GetProduct(int productId)
+        {
+            return _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
+        }
+
+        public async Task<Product> GetProduct(string title)
+        {
+            return _databaseContext.Products.Where(p => p.Title == title).FirstOrDefault();
         }
 
         public async Task<ICollection<Product>> FilterResults(bool recentlyAdded, int formatId, List<int> genresId)
@@ -215,51 +202,6 @@ namespace Primeflix.Services.ProductService
             return products;
         }
 
-        public async Task<Product> GetProduct(int productId)
-        {
-            return _databaseContext.Products.Where(p => p.Id == productId).FirstOrDefault();
-        }
-
-        public async Task<Product> GetProduct(string title)
-        {
-            return _databaseContext.Products.Where(p => p.Title == title).FirstOrDefault();
-        }
-
-        public async Task<ICollection<Product>> GetProducts()
-        {
-            return _databaseContext.Products.OrderBy(p => p.Title)
-                .Include(p => p.DirectorsMovies)
-                .Include(p => p.ActorsMovies)
-                .Include(p => p.ProductGenre)
-                .ToList();
-        }
-
-        public async Task<bool> IsDuplicate(int productId, string productTitle)
-        {
-            var product = _databaseContext.Products.Where(p => p.Title.Trim().ToUpper() == productTitle.Trim().ToUpper() && p.Id != productId).FirstOrDefault();
-            if (product != null)
-            {
-                // IMPLEMENT DIRECTOR NAME COMPARISON (ADD METHOD MAYBE?)
-                return true;
-            }
-            return false;
-        }
-
-        public async Task<bool> ProductExists(int productId)
-        {
-            return _databaseContext.Products.Any(p => p.Id == productId);
-        }
-
-        public async Task<bool> ProductExists(string title)
-        {
-            return _databaseContext.Products.Any(p => p.Title == title);
-        }
-
-        public async Task<bool> Save()
-        {
-            return _databaseContext.SaveChanges() < 0 ? false : true;
-        }
-
         public async Task<ICollection<Product>> SearchProducts(string searchText)
         {
             return _databaseContext.ProductsTranslations
@@ -268,6 +210,53 @@ namespace Primeflix.Services.ProductService
                 pt.Summary.ToLower().Contains(searchText.ToLower())).Select(pt => pt.Product)
                 .Distinct()
                 .ToList();
+        }
+
+        public async Task<bool> CreateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId)
+        {
+            var directors = _databaseContext.Celebrities.Where(c => directorsId.Contains(c.Id)).ToList();
+            var actors = _databaseContext.Celebrities.Where(c => actorsId.Contains(c.Id)).ToList();
+            var genres = _databaseContext.Genres.Where(g => genresId.Contains(g.Id)).ToList();
+
+            foreach (var director in directors)
+            {
+                var productDirector = new Director()
+                {
+                    Celebrity = director,
+                    Product = product
+                };
+                _databaseContext.Add(productDirector);
+            }
+
+            foreach (var actor in actors)
+            {
+                var productActor = new Actor()
+                {
+                    Celebrity = actor,
+                    Product = product
+                };
+                _databaseContext.Add(productActor);
+            }
+
+            foreach (var genre in genres)
+            {
+                var productGenre = new ProductGenre()
+                {
+                    Genre = genre,
+                    Product = product
+                };
+                _databaseContext.Add(productGenre);
+            }
+
+            foreach (var translation in translations)
+            {
+                translation.Product = product;
+                _databaseContext.Add(translation);
+            }
+
+            _databaseContext.Add(product);
+
+            return await Save();
         }
 
         public async Task<bool> UpdateProduct(Product product, List<ProductTranslation> translations, List<int> directorsId, List<int> actorsId, List<int> genresId)
@@ -327,6 +316,17 @@ namespace Primeflix.Services.ProductService
             _databaseContext.Update(product);
 
             return await Save();
+        }
+
+        public async Task<bool> DeleteProduct(Product product)
+        {
+            _databaseContext.Remove(product);
+            return await Save();
+        }
+
+        public async Task<bool> Save()
+        {
+            return _databaseContext.SaveChanges() < 0 ? false : true;
         }
     }
 }

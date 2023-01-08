@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.Address;
-using Primeflix.Services.Authentication;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
@@ -11,18 +12,22 @@ namespace Primeflix.Controllers
     public class AddressController : ControllerBase
     {
         private readonly IAddressRepository _addressRepository;
-        private readonly IAuthentication _authentication;
+        private readonly IUserRepository _userRepository;
 
-        public AddressController(IAddressRepository addressRepository, IAuthentication authentication)
+        public AddressController(IAddressRepository addressRepository, IUserRepository userRepository)
         {
             _addressRepository = addressRepository;
-            _authentication = authentication;
+            _userRepository = userRepository;
         }
 
         [HttpGet]
+        [Authorize]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<AddressDto>))]
         public async Task<IActionResult> GetAddressOfAUser()
         {
-            var userId = await GetUserIdFromToken();
+            var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null || userId == 0)
                 return BadRequest();
@@ -45,9 +50,14 @@ namespace Primeflix.Controllers
         }
 
         [HttpPost]
+        [Authorize]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> AddOrUpdateAddress(AddressDto addressDto)
         {
-            var userId = await GetUserIdFromToken();
+            var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null || userId == 0)
                 return BadRequest();
@@ -71,10 +81,10 @@ namespace Primeflix.Controllers
                     return StatusCode(500, ModelState);
                 }
 
-                var user = await _authentication.GetUser(userId);
+                var user = await _userRepository.GetUser(userId);
                 user.Address = newAddress;
 
-                if (!(await _authentication.UpdateUser(user)))
+                if (!(await _userRepository.UpdateUser(user)))
                 {
                     ModelState.AddModelError("", "Something went wrong adding the user's address");
                     return StatusCode(500, ModelState);
@@ -97,37 +107,6 @@ namespace Primeflix.Controllers
 
                 return StatusCode(204);
             }
-        }
-
-
-        public async Task<int> GetUserIdFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return 0;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
-
-            return userId;
-        }
-
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return null;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
-
-            return role;
         }
     }
 }

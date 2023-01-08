@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using MySql.EntityFrameworkCore.Extensions;
 using Primeflix.Data;
 using Primeflix.Services.Address;
-using Primeflix.Services.Authentication;
+using Primeflix.Services.UserService;
 using Primeflix.Services.CartService;
 using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FacebookService;
@@ -14,6 +14,7 @@ using Primeflix.Services.GenreService;
 using Primeflix.Services.GenreTranslationService;
 using Primeflix.Services.LanguageService;
 using Primeflix.Services.OrderService;
+using Primeflix.Services.OrderStatusService;
 using Primeflix.Services.PaymentService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
@@ -41,13 +42,17 @@ builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 builder.Services.AddScoped<IGenreTranslationRepository, GenreTranslationRepository>();
 builder.Services.AddScoped<IProductTranslationRepository, ProductTranslationRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
-builder.Services.AddScoped<IAuthentication, Authentication>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+<<<<<<< HEAD
+builder.Services.AddScoped<IOrderStatusRepository, OrderStatusRepository>();
+=======
 builder.Services.AddScoped<IFacebookRepository, FacebookRepository>();
 builder.Services.AddHttpClient();
+>>>>>>> origin/ISL-37-Facebook
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,

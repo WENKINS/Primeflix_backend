@@ -5,21 +5,25 @@ using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FormatService;
 using Primeflix.Services.GenreService;
 using Primeflix.Services.GenreTranslationService;
+using Primeflix.Services.LanguageService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ActorsController : Controller
+    public class ActorsController : ControllerBase
     {
-        private ICelebrityRepository _celebrityRepository;
-        private IProductRepository _productRepository;
-        private IGenreRepository _genreRepository;
-        private IFormatRepository _formatRepository;
-        private IGenreTranslationRepository _genreTranslationRepository;
-        private IProductTranslationRepository _productTranslationRepository;
+        private readonly ICelebrityRepository _celebrityRepository;
+        private readonly IProductRepository _productRepository;
+        private readonly IGenreRepository _genreRepository;
+        private readonly IFormatRepository _formatRepository;
+        private readonly IGenreTranslationRepository _genreTranslationRepository;
+        private readonly IProductTranslationRepository _productTranslationRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ILanguageRepository _languageRepository;
 
         public ActorsController(
             ICelebrityRepository celebrityRepository,
@@ -27,7 +31,9 @@ namespace Primeflix.Controllers
             IGenreRepository genreRepository,
             IFormatRepository formatRepository,
             IGenreTranslationRepository genreTranslationRepository,
-            IProductTranslationRepository productTranslationRepository
+            IProductTranslationRepository productTranslationRepository,
+            IUserRepository userRepository,
+            ILanguageRepository languageRepository
             )
         {
             _celebrityRepository = celebrityRepository;
@@ -36,10 +42,13 @@ namespace Primeflix.Controllers
             _formatRepository = formatRepository;
             _genreTranslationRepository = genreTranslationRepository;
             _productTranslationRepository = productTranslationRepository;
+            _userRepository = userRepository;
+            _languageRepository = languageRepository;
         }
 
         //api/actors
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
         public async Task<IActionResult> GetActors()
@@ -64,6 +73,7 @@ namespace Primeflix.Controllers
 
         //api/actors/celebrityId
         [HttpGet("{celebrityId}", Name = "GetActor")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
@@ -89,6 +99,7 @@ namespace Primeflix.Controllers
 
         //api/actors/products/productId
         [HttpGet("products/{productId}")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
@@ -116,15 +127,22 @@ namespace Primeflix.Controllers
             return Ok(celebritiesDto);
         }
 
-        //api/actors/celebrityId/products/languageCode
-        [HttpGet("{languageCode}/{celebrityId}/products")]
+        //api/actors/celebrityId/products?lang
+        [HttpGet("{celebrityId}/products")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public async Task<IActionResult> GetProductsOfAnActor(int celebrityId, string languageCode)
+        public async Task<IActionResult> GetProductsOfAnActor(int celebrityId, [FromQuery] string lang)
         {
             if (!await _celebrityRepository.ActorExists(celebrityId))
                 return NotFound();
+
+            if (!(await _languageRepository.LanguageExists(lang)))
+            {
+                ModelState.AddModelError("", $"Language doesn't exist");
+                return StatusCode(500, ModelState);
+            }
 
             var products = await _celebrityRepository.GetProductsOfAnActor(celebrityId);
 
@@ -166,7 +184,7 @@ namespace Primeflix.Controllers
 
                 foreach (var genre in genres)
                 {
-                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                    var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
                     genresDto.Add(new GenreDto
                     {
                         Id = genre.Id,
@@ -181,7 +199,7 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
-                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, lang);
 
                 productsDto.Add(new ProductDetailsDto
                 {

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FormatService;
@@ -6,19 +7,21 @@ using Primeflix.Services.GenreService;
 using Primeflix.Services.GenreTranslationService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DirectorsController : Controller
+    public class DirectorsController : ControllerBase
     {
-        private ICelebrityRepository _celebrityRepository;
-        private IProductRepository _productRepository;
-        private IGenreRepository _genreRepository;
-        private IFormatRepository _formatRepository;
-        private IGenreTranslationRepository _genreTranslationRepository;
-        private IProductTranslationRepository _productTranslationRepository;
+        private readonly ICelebrityRepository _celebrityRepository;
+        private readonly IProductRepository _productRepository;
+        private readonly IGenreRepository _genreRepository;
+        private readonly IFormatRepository _formatRepository;
+        private readonly IGenreTranslationRepository _genreTranslationRepository;
+        private readonly IProductTranslationRepository _productTranslationRepository;
+        private readonly IUserRepository _userRepository;
 
         public DirectorsController(
             ICelebrityRepository celebrityRepository, 
@@ -26,7 +29,8 @@ namespace Primeflix.Controllers
             IGenreRepository genreRepository, 
             IFormatRepository formatRepository,
             IGenreTranslationRepository genreTranslationRepository,
-            IProductTranslationRepository productTranslationRepository
+            IProductTranslationRepository productTranslationRepository,
+            IUserRepository userRepository
             )
         {
             _celebrityRepository = celebrityRepository;
@@ -35,10 +39,12 @@ namespace Primeflix.Controllers
             _formatRepository = formatRepository;
             _genreTranslationRepository = genreTranslationRepository;
             _productTranslationRepository = productTranslationRepository;
+            _userRepository = userRepository;
         }
 
         //api/directors
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
         public async Task<IActionResult> GetDirectors()
@@ -63,6 +69,7 @@ namespace Primeflix.Controllers
 
         //api/directors/celebrityId
         [HttpGet("{celebrityId}", Name = "GetDirector")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
@@ -88,6 +95,7 @@ namespace Primeflix.Controllers
 
         //api/directors/products/productId
         [HttpGet("products/{productId}")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CelebrityDto>))]
@@ -120,6 +128,7 @@ namespace Primeflix.Controllers
 
         //api/directors/celebrityId/products/languageCode
         [HttpGet("{languageCode}/{celebrityId}/products")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
-using Primeflix.Services.Authentication;
 using Primeflix.Services.CartService;
 using Primeflix.Services.OrderService;
+using Primeflix.Services.OrderStatusService;
 using Primeflix.Services.ProductService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
@@ -12,38 +14,31 @@ namespace Primeflix.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private IOrderRepository _orderRepository;
-        private ICartRepository _cartRepository;
-        private IAuthentication _authentication;
-        private IProductRepository _productRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IUserRepository _authentication;
+        private readonly IProductRepository _productRepository;
+        private readonly IOrderStatusRepository _orderStatusRepository;
 
-        public OrdersController(IOrderRepository orderRepository, ICartRepository cartRepository, IAuthentication authentication, IProductRepository productRepository)
+        public OrdersController(
+            IOrderRepository orderRepository, 
+            IUserRepository authentication, 
+            IProductRepository productRepository, 
+            IOrderStatusRepository orderStatusRepository
+            )
         {
             _orderRepository = orderRepository;
-            _cartRepository = cartRepository;
             _authentication = authentication;
             _productRepository = productRepository;
+            _orderStatusRepository = orderStatusRepository;
         }
 
-        /*[HttpPost]
-        public async Task<IActionResult> PlaceOrder()
-        {
-            var userRole = await GetUserRoleFromToken();
-
-            if (userRole == null)
-                return BadRequest();
-
-            var userId = await GetUserIdFromToken();
-            var cart = await _cartRepository.GetCartOfAUser(userId);
-            await _orderRepository.PlaceOrder(cart.Id);
-
-            return Ok();
-        }*/
-
         [HttpGet]
+        [Authorize]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<OrderDto>))]
         public async Task<IActionResult> GetOrders()
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _authentication.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -57,7 +52,7 @@ namespace Primeflix.Controllers
 
             else
             {
-                var userId = await GetUserIdFromToken();
+                var userId = await _authentication.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
                 orders = (List<Order>)await _orderRepository.GetOrdersOfAUser(userId);
             }
 
@@ -109,36 +104,52 @@ namespace Primeflix.Controllers
             return Ok(ordersDto);
         }
 
-        public async Task<int> GetUserIdFromToken()
+        [HttpPut]
+        [Authorize]
+        [HttpPut("{orderId}")]
+        [ProducesResponseType(204)] // no content
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> UpdateOrder(int orderId, [FromBody] OrderStatusUpdateDto orderUpdate)
         {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
+            var userRole = await _authentication.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
             {
-                return 0;
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
             }
 
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
+            if (orderId == null)
+                return BadRequest();
 
-            return userId;
-        }
+            if (orderId != orderUpdate.OrderId)
+                return BadRequest();
 
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
+            var order = await _orderRepository.GetOrder(orderId);
 
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            var status = await _orderStatusRepository.GetStatus(orderUpdate.Status);
+
+            if(status == null)
             {
-                return null;
+                ModelState.AddModelError("", "Could not find status");
+                return StatusCode(500, ModelState);
             }
 
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
+            order.Status = status;
 
-            return role;
+            if(!(await _orderRepository.UpdateOrder(order)))
+            {
+                ModelState.AddModelError("", "Somethign went wrong updating the order's status");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
         }
     }
-
-
 }
