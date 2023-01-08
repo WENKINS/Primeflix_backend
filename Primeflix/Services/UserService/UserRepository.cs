@@ -7,52 +7,19 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace Primeflix.Services.Authentication
+namespace Primeflix.Services.UserService
 {
-    public class Authentication : IAuthentication
+    public class UserRepository : IUserRepository
     {
-        private DatabaseContext _databaseContext;
+        private readonly DatabaseContext _databaseContext;
         private readonly IConfiguration _configuration;
-        private IRoleRepository _roleRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public Authentication(DatabaseContext databaseContext, IConfiguration configuration, IRoleRepository roleRepository)
+        public UserRepository(DatabaseContext databaseContext, IConfiguration configuration, IRoleRepository roleRepository)
         {
             _databaseContext = databaseContext;
             _configuration = configuration;
             _roleRepository = roleRepository;
-        }
-
-        public async Task<string> Login(string email, string password)
-        {
-            var user = _databaseContext.Users.Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper())).FirstOrDefault();
-
-            if(user == null)
-            {
-                return "User not found"; // SECURITY RISK!
-            }
-
-            if(!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
-            {
-                return null;
-            }
-
-            return await CreateToken(user);
-        }
-
-        public async Task<bool> Register(User user, string password)
-        {
-            CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
-
-            user.PasswordHash = passwordHash;
-            user.PasswordSalt = passwordSalt;
-
-            if(user.Language == null)
-            {
-                user.Language = _databaseContext.Languages.Where(l => l.Name == "English").FirstOrDefault();
-            }
-
-            _databaseContext.Users.Add(user);
-            return await Save();
         }
 
         public async Task<bool> UserExists(string email)
@@ -80,12 +47,56 @@ namespace Primeflix.Services.Authentication
                 .Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper()))
                 .FirstOrDefault();
         }
-
         public async Task<User> GetUser(int userId)
         {
             return _databaseContext.Users
                 .Where(u => u.Id == userId)
                 .FirstOrDefault();
+        }
+
+        public async Task<bool> Register(User user, string password)
+        {
+            CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+
+            if (user.Language == null)
+            {
+                user.Language = _databaseContext.Languages.Where(l => l.Name == "English").FirstOrDefault();
+            }
+
+            _databaseContext.Users.Add(user);
+            return await Save();
+        }
+
+        public async Task<string> Login(string email, string password)
+        {
+            var user = _databaseContext.Users.Where(u => u.Email.Trim().ToUpper().Equals(email.Trim().ToUpper())).FirstOrDefault();
+
+            if (user == null)
+            {
+                return "User not found"; // SECURITY RISK!
+            }
+
+            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            {
+                return null;
+            }
+
+            return await CreateToken(user);
+        }
+
+        public async Task<bool> UpdateUser(User user)
+        {
+            _databaseContext.Update(user);
+            return await Save();
+        }
+
+        public async Task<bool> DeleteUser(User user)
+        {
+            _databaseContext.Remove(user);
+            return await Save();
         }
 
         public async Task<bool> Save()
@@ -153,6 +164,32 @@ namespace Primeflix.Services.Authentication
             return "Could not decode JWT";
         }
 
+        public async Task<int> GetUserIdFromToken(string bearerToken)
+        {
+            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            {
+                return 0;
+            }
+
+            string token = bearerToken.Substring("Bearer ".Length);
+            int userId = Int32.Parse(await DecodeTokenForId(token));
+
+            return userId;
+        }
+
+        public async Task<string> GetUserRoleFromToken(string bearerToken)
+        {
+            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
+            {
+                return null;
+            }
+
+            string token = bearerToken.Substring("Bearer ".Length);
+            string role = await DecodeTokenForRole(token);
+
+            return role;
+        }
+
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using (var hmac = new System.Security.Cryptography.HMACSHA512())
@@ -170,18 +207,6 @@ namespace Primeflix.Services.Authentication
                 var computeHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
                 return computeHash.SequenceEqual(passwordHash);
             }
-        }
-
-        public async Task<bool> UpdateUser(User user)
-        {
-            _databaseContext.Update(user);
-            return await Save();
-        }
-
-        public async Task<bool> DeleteUser(User user)
-        {
-            _databaseContext.Remove(user);
-            return await Save();
         }
     }
 }

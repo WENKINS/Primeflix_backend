@@ -5,7 +5,7 @@ namespace Primeflix.Services.ProductTranslationService
 {
     public class ProductTranslationRepository : IProductTranslationRepository
     {
-        private DatabaseContext _databaseContext;
+        private readonly DatabaseContext _databaseContext;
 
         public ProductTranslationRepository(DatabaseContext databaseContext)
         {
@@ -17,6 +17,12 @@ namespace Primeflix.Services.ProductTranslationService
             return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.LanguageId == languageId).Any();
         }
 
+        public async Task<bool> IsDuplicate(int productId, int languageId)
+        {
+            var productTranslation = _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.LanguageId == languageId).FirstOrDefault();
+            return productTranslation == null ? false : true;
+        }
+
         public async Task<ICollection<ProductTranslation>> GetProductsTranslations()
         {
             return _databaseContext.ProductsTranslations.ToList();
@@ -25,12 +31,6 @@ namespace Primeflix.Services.ProductTranslationService
         public async Task<ProductTranslation> GetProductTranslation(int productId, string languageCode)
         {
             return _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.Language.Code == languageCode).FirstOrDefault();
-        }
-
-        public async Task<bool> IsDuplicate(int productId, int languageId)
-        {
-            var productTranslation = _databaseContext.ProductsTranslations.Where(pt => pt.ProductId == productId && pt.LanguageId == languageId).FirstOrDefault();
-            return productTranslation == null ? false : true;
         }
 
         public async Task<ICollection<ProductTranslation>> GetTranslationsOfAProduct(int productId)

@@ -5,10 +5,40 @@ namespace Primeflix.Services.CartService
 {
     public class CartRepository : ICartRepository
     {
-        private DatabaseContext _databaseContext;
+        private readonly DatabaseContext _databaseContext;
         public CartRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext;
+        }
+
+        public async Task<bool> CartExists(int cartId)
+        {
+            return _databaseContext.Carts.Any(c => c.Id == cartId);
+        }
+
+        public async Task<bool> CartOfAUserExists(int userId)
+        {
+            return _databaseContext.Carts.Any(c => c.UserId == userId);
+        }
+
+        public async Task<ICollection<Cart>> GetCarts()
+        {
+            return _databaseContext.Carts.ToList();
+        }
+
+        public async Task<Cart> GetCart(int cartId)
+        {
+            return _databaseContext.Carts.Where(c => c.Id == cartId).FirstOrDefault();
+        }
+
+        public async Task<Cart> GetCartOfAUser(int userId)
+        {
+            return _databaseContext.Carts.Where(c => c.UserId == userId).FirstOrDefault();
+        }
+
+        public async Task<ICollection<CartProduct>> GetProductsOfACart(int cartId)
+        {
+            return _databaseContext.CartProducts.Where(cp => cp.CartId == cartId).ToList();
         }
 
         public async Task<bool> AddProductToCart(int userId, int productId, int quantity)
@@ -47,16 +77,6 @@ namespace Primeflix.Services.CartService
             return await Save();
         }
 
-        public async Task<bool> CartExists(int cartId)
-        {
-            return _databaseContext.Carts.Any(c => c.Id == cartId);
-        }
-
-        public async Task<bool> CartOfAUserExists(int userId)
-        {
-            return _databaseContext.Carts.Any(c => c.UserId == userId);
-        }
-
         public async Task<bool> CreateCart(int userId)
         {
             var user = _databaseContext.Users.Where(u => u.Id == userId).FirstOrDefault();
@@ -72,26 +92,6 @@ namespace Primeflix.Services.CartService
         {
             _databaseContext.Remove(cart);
             return await Save();
-        }
-
-        public async Task<Cart> GetCart(int cartId)
-        {
-            return _databaseContext.Carts.Where(c => c.Id == cartId).FirstOrDefault();
-        }
-
-        public async Task<Cart> GetCartOfAUser(int userId)
-        {
-            return _databaseContext.Carts.Where(c => c.UserId == userId).FirstOrDefault();
-        }
-
-        public async Task<ICollection<Cart>> GetCarts()
-        {
-            return _databaseContext.Carts.ToList();
-        }
-
-        public async Task<ICollection<CartProduct>> GetProductsOfACart(int cartId)
-        {
-            return _databaseContext.CartProducts.Where(cp => cp.CartId == cartId).ToList();
         }
 
         public async Task<bool> Save()

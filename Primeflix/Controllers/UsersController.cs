@@ -3,44 +3,48 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
-using Primeflix.Services.Authentication;
+using Primeflix.Services.UserService;
 using Primeflix.Services.CartService;
 using Primeflix.Services.LanguageService;
 using Primeflix.Services.RoleService;
 
 namespace Primeflix.Controllers
 {
-    [EnableCors]
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : Controller
+    public class UsersController : ControllerBase
     {
-        private IAuthentication _authentication;
-        private ILanguageRepository _languageRepository;
-        private ICartRepository _cartRepository;
-        private IRoleRepository _roleRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ILanguageRepository _languageRepository;
+        private readonly ICartRepository _cartRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public UsersController(IAuthentication authentication, ILanguageRepository languageRepository, ICartRepository cartRepository, IRoleRepository roleRepository)
+        public UsersController(
+            IUserRepository userRepository, 
+            ILanguageRepository languageRepository, 
+            ICartRepository cartRepository, 
+            IRoleRepository roleRepository
+            )
         {
-            _authentication = authentication;
+            _userRepository = userRepository;
             _languageRepository = languageRepository;
             _cartRepository = cartRepository;
             _roleRepository = roleRepository;
         }
 
         //api/users/register
+        [HttpPost("register")]
         [AllowAnonymous]
         [ProducesResponseType(201, Type = typeof(UserDto))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        [HttpPost("register")]
         public async Task<IActionResult> Register(UserRegisterDto newUser)
         {
             if (newUser == null)
                 return BadRequest(ModelState);
 
-            if (await _authentication.UserExists(newUser.Email))
+            if (await _userRepository.UserExists(newUser.Email))
             {
                 ModelState.AddModelError("", $"A user with email address {newUser.Email} already exists");
                 return StatusCode(422, ModelState);
@@ -57,13 +61,13 @@ namespace Primeflix.Controllers
                 LastName = newUser.LastName
             };
 
-            if (!await _authentication.Register(user, newUser.Password))
+            if (!await _userRepository.Register(user, newUser.Password))
             {
                 ModelState.AddModelError("", $"Something went wrong saving user with address {newUser.Email}");
                 return StatusCode(500, ModelState);
             }
 
-            var userId = (await _authentication.GetUser(user.Email)).Id;
+            var userId = (await _userRepository.GetUser(user.Email)).Id;
 
             if(!await _cartRepository.CreateCart(userId))
             {
@@ -88,7 +92,7 @@ namespace Primeflix.Controllers
             if (userLogin == null)
                 return BadRequest(ModelState);
 
-            if (!await _authentication.UserExists(userLogin.Email))
+            if (!await _userRepository.UserExists(userLogin.Email))
             {
                 ModelState.AddModelError("", $"User {userLogin.Email} doesn't exist"); // SECURITY RISK!
                 return StatusCode(422, ModelState);
@@ -97,7 +101,7 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var response = await _authentication.Login(userLogin.Email, userLogin.Password);
+            var response = await _userRepository.Login(userLogin.Email, userLogin.Password);
 
             if (response == null)
             {
@@ -116,14 +120,14 @@ namespace Primeflix.Controllers
         [ProducesResponseType(200, Type = typeof(IEnumerable<UserDto>))]
         public async Task<IActionResult> GetUsers()
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
 
             if (userRole.Equals("admin"))
             {
-                var users = await _authentication.GetUsers();
+                var users = await _userRepository.GetUsers();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
@@ -162,9 +166,9 @@ namespace Primeflix.Controllers
 
             else
             {
-                var userId = await GetUserIdFromToken();
+                var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
-                var user = await _authentication.GetUser(userId);
+                var user = await _userRepository.GetUser(userId);
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
@@ -210,17 +214,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(200, Type = typeof(UserDto))]
         public async Task<IActionResult> GetUser(int userId)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
 
             if (userRole.Equals("admin"))
             {
-                if (!await _authentication.UserExists(userId))
+                if (!await _userRepository.UserExists(userId))
                     return NotFound();
 
-                var user = await _authentication.GetUser(userId);
+                var user = await _userRepository.GetUser(userId);
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
@@ -269,22 +273,22 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteUser(int userId)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
 
             if (userRole.Equals("admin"))
             {
-                if (!await _authentication.UserExists(userId))
+                if (!await _userRepository.UserExists(userId))
                     return NotFound();
 
-                var userToDelete = await _authentication.GetUser(userId);
+                var userToDelete = await _userRepository.GetUser(userId);
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (!await _authentication.DeleteUser(userToDelete))
+                if (!await _userRepository.DeleteUser(userToDelete))
                 {
                     ModelState.AddModelError("", $"Something went wrong deleting {userToDelete.FirstName} {userToDelete.LastName}");
                     return StatusCode(500, ModelState);
@@ -307,7 +311,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> UpdateUser([FromBody] User userToUpdate)
         {
-            var userId = await GetUserIdFromToken();
+            var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null)
                 return BadRequest();
@@ -315,10 +319,10 @@ namespace Primeflix.Controllers
             if (userId != userToUpdate.Id)
                 return BadRequest();
 
-            if (!await _authentication.UserExists(userId))
+            if (!await _userRepository.UserExists(userId))
                 return NotFound();
 
-            var user = await _authentication.GetUser(userToUpdate.Id);
+            var user = await _userRepository.GetUser(userToUpdate.Id);
 
             user.FirstName = userToUpdate.FirstName;
             user.LastName = userToUpdate.LastName;
@@ -331,7 +335,7 @@ namespace Primeflix.Controllers
             user.Language = await _languageRepository.GetLanguage(userToUpdate.LanguageId);
             user.Email = userToUpdate.Email;
 
-            if (!await _authentication.UpdateUser(user))
+            if (!await _userRepository.UpdateUser(user))
             {
                 ModelState.AddModelError("", $"Something went wrong updating the user {userToUpdate.FirstName} {userToUpdate.LastName}");
                 return StatusCode(500, ModelState);
@@ -350,7 +354,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> UpdateUser(int userId, [FromBody] User userToUpdate)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -360,10 +364,10 @@ namespace Primeflix.Controllers
                 if (userId != userToUpdate.Id)
                     return BadRequest();
 
-                if (!await _authentication.UserExists(userId))
+                if (!await _userRepository.UserExists(userId))
                     return NotFound();
 
-                var user = await _authentication.GetUser(userToUpdate.Id);
+                var user = await _userRepository.GetUser(userToUpdate.Id);
 
                 user.FirstName = userToUpdate.FirstName;
                 user.LastName = userToUpdate.LastName;
@@ -382,7 +386,7 @@ namespace Primeflix.Controllers
                 user.Language = await _languageRepository.GetLanguage(userToUpdate.LanguageId);
                 user.Email = userToUpdate.Email;
 
-                if (!await _authentication.UpdateUser(user))
+                if (!await _userRepository.UpdateUser(user))
                 {
                     ModelState.AddModelError("", $"Something went wrong updating the user {userToUpdate.FirstName} {userToUpdate.LastName}");
                     return StatusCode(500, ModelState);
@@ -395,37 +399,5 @@ namespace Primeflix.Controllers
             ModelState.AddModelError("", "User is not an admin");
             return StatusCode(401, ModelState);
         }
-
-        public async Task<int> GetUserIdFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return 0;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
-
-            return userId;
-        }
-
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return null;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
-
-            return role;
-        }
-
-
     }
 }

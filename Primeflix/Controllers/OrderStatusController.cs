@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
-using Primeflix.Services.Authentication;
 using Primeflix.Services.LanguageService;
 using Primeflix.Services.OrderStatusService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
@@ -11,25 +11,30 @@ namespace Primeflix.Controllers
     [ApiController]
     public class OrderStatusController : ControllerBase
     {
-        private ILanguageRepository _languageRepository;
-        private IAuthentication _authentication;
-        private IOrderStatusRepository _orderStatusRepository;
+        private readonly ILanguageRepository _languageRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IOrderStatusRepository _orderStatusRepository;
         
         public OrderStatusController(
             ILanguageRepository languageRepository,
-            IAuthentication authentication,
+            IUserRepository userRepository,
             IOrderStatusRepository orderStatusRepository
             )
         {
             _languageRepository = languageRepository;
-            _authentication = authentication;
+            _userRepository = userRepository;
             _orderStatusRepository = orderStatusRepository;
         }
 
         [HttpGet]
+        [Authorize]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<StatusDto>))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> GetStatuses([FromQuery]string lang)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -64,36 +69,6 @@ namespace Primeflix.Controllers
             }
 
             return Ok(statusesDto);
-        }
-
-        public async Task<int> GetUserIdFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return 0;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
-
-            return userId;
-        }
-
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return null;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
-
-            return role;
         }
     }
 }

@@ -5,22 +5,28 @@ namespace Primeflix.Services.RoleService
 {
     public class RoleRepository : IRoleRepository
     {
-        private DatabaseContext _databaseContext;
+        private readonly DatabaseContext _databaseContext;
 
         public RoleRepository(DatabaseContext databaseContext)
         {
             _databaseContext = databaseContext;
         }
-        public async Task<bool> CreateRole(Role role)
+
+
+        public async Task<bool> RoleExists(int roleId)
         {
-            _databaseContext.Add(role);
-            return await Save();
+            return _databaseContext.Roles.Any(r => r.Id == roleId);
         }
 
-        public async Task<bool> DeleteRole(Role role)
+        public async Task<bool> IsDuplicate(string name)
         {
-            _databaseContext.Remove(role);
-            return await Save();
+            var role = _databaseContext.Roles.Where(r => r.Name.Trim().ToUpper() == name.Trim().ToUpper()).FirstOrDefault();
+            return role == null ? false : true;
+        }
+
+        public async Task<ICollection<Role>> GetRoles()
+        {
+            return _databaseContext.Roles.OrderBy(r => r.Name).ToList();
         }
 
         public async Task<Role> GetRole(int roleId)
@@ -33,31 +39,27 @@ namespace Primeflix.Services.RoleService
             return _databaseContext.Users.Where(u => u.Id == userId).Select(u => u.Role).FirstOrDefault();
         }
 
-        public async Task<ICollection<Role>> GetRoles()
+        public async Task<bool> CreateRole(Role role)
         {
-            return _databaseContext.Roles.OrderBy(r => r.Name).ToList();
-        }
-
-        public async Task<bool> IsDuplicate(string name)
-        {
-            var role = _databaseContext.Roles.Where(r => r.Name.Trim().ToUpper() == name.Trim().ToUpper()).FirstOrDefault();
-            return role == null ? false : true;
-        }
-
-        public async Task<bool> RoleExists(int roleId)
-        {
-            return _databaseContext.Roles.Any(r => r.Id == roleId);
-        }
-
-        public async Task<bool> Save()
-        {
-            return _databaseContext.SaveChanges() < 0 ? false : true;
+            _databaseContext.Add(role);
+            return await Save();
         }
 
         public async Task<bool> UpdateRole(Role role)
         {
             _databaseContext.Update(role);
             return await Save();
+        }
+
+        public async Task<bool> DeleteRole(Role role)
+        {
+            _databaseContext.Remove(role);
+            return await Save();
+        }
+
+        public async Task<bool> Save()
+        {
+            return _databaseContext.SaveChanges() < 0 ? false : true;
         }
     }
 }

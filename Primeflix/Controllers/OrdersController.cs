@@ -2,11 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
-using Primeflix.Services.Authentication;
 using Primeflix.Services.CartService;
 using Primeflix.Services.OrderService;
 using Primeflix.Services.OrderStatusService;
 using Primeflix.Services.ProductService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
@@ -14,25 +14,31 @@ namespace Primeflix.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private IOrderRepository _orderRepository;
-        private ICartRepository _cartRepository;
-        private IAuthentication _authentication;
-        private IProductRepository _productRepository;
-        private IOrderStatusRepository _orderStatusRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IUserRepository _authentication;
+        private readonly IProductRepository _productRepository;
+        private readonly IOrderStatusRepository _orderStatusRepository;
 
-        public OrdersController(IOrderRepository orderRepository, ICartRepository cartRepository, IAuthentication authentication, IProductRepository productRepository, IOrderStatusRepository orderStatusRepository)
+        public OrdersController(
+            IOrderRepository orderRepository, 
+            IUserRepository authentication, 
+            IProductRepository productRepository, 
+            IOrderStatusRepository orderStatusRepository
+            )
         {
             _orderRepository = orderRepository;
-            _cartRepository = cartRepository;
             _authentication = authentication;
             _productRepository = productRepository;
             _orderStatusRepository = orderStatusRepository;
         }
 
         [HttpGet]
+        [Authorize]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<OrderDto>))]
         public async Task<IActionResult> GetOrders()
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _authentication.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -46,7 +52,7 @@ namespace Primeflix.Controllers
 
             else
             {
-                var userId = await GetUserIdFromToken();
+                var userId = await _authentication.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
                 orders = (List<Order>)await _orderRepository.GetOrdersOfAUser(userId);
             }
 
@@ -108,7 +114,7 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> UpdateOrder(int orderId, [FromBody] OrderStatusUpdateDto orderUpdate)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _authentication.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -145,37 +151,5 @@ namespace Primeflix.Controllers
 
             return NoContent();
         }
-
-        public async Task<int> GetUserIdFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return 0;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
-
-            return userId;
-        }
-
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return null;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
-
-            return role;
-        }
     }
-
-
 }

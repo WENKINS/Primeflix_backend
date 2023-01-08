@@ -5,7 +5,7 @@ namespace Primeflix.Services.GenreTranslationService
 {
     public class GenreTranslationRepository : IGenreTranslationRepository
     {
-        private DatabaseContext _databaseContext;
+        private readonly DatabaseContext _databaseContext;
 
         public GenreTranslationRepository(DatabaseContext databaseContext)
         {
@@ -15,6 +15,12 @@ namespace Primeflix.Services.GenreTranslationService
         public async Task<bool> GenreTranslationExists(int genreId, int languageId)
         {
             return _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.LanguageId == languageId).Any();
+        }
+
+        public async Task<bool> IsDuplicate(int genreId, int languageId)
+        {
+            var genreTranslation = _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.LanguageId == languageId).FirstOrDefault();
+            return genreTranslation == null ? false : true;
         }
 
         public async Task<ICollection<GenreTranslation>> GetGenresTranslations()
@@ -27,11 +33,6 @@ namespace Primeflix.Services.GenreTranslationService
             return _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.Language.Code == languageCode).FirstOrDefault();
         }
 
-        public async Task<bool> IsDuplicate(int genreId, int languageId)
-        {
-            var genreTranslation = _databaseContext.GenresTranslations.Where(gt => gt.GenreId == genreId && gt.LanguageId == languageId).FirstOrDefault();
-            return genreTranslation == null ? false : true;
-        }
 
         public async Task<ICollection<GenreTranslation>> GetTranslationsOfAGenre(int genreId)
         {

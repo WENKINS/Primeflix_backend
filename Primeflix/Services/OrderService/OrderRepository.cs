@@ -6,8 +6,8 @@ namespace Primeflix.Services.OrderService
 {
     public class OrderRepository : IOrderRepository
     {
-        private DatabaseContext _databaseContext;
-        private ICartRepository _cartRepository;
+        private readonly DatabaseContext _databaseContext;
+        private readonly ICartRepository _cartRepository;
 
         public OrderRepository(DatabaseContext databaseContext, ICartRepository cartRepository)
         {
@@ -15,10 +15,20 @@ namespace Primeflix.Services.OrderService
             _cartRepository = cartRepository;
         }
 
-        public async Task<bool> DeleteOrder(Order order)
+        public async Task<bool> OrderExists(int orderId)
         {
-            _databaseContext.Remove(order);
-            return await Save();
+            return _databaseContext.Orders.Where(o => o.Id == orderId).Any();
+        }
+
+        public async Task<bool> IsDuplicate(int orderId, int userId)
+        {
+            var order = _databaseContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).Any();
+            return order;
+        }
+
+        public async Task<ICollection<Order>> GetOrders()
+        {
+            return _databaseContext.Orders.ToList();
         }
 
         public async Task<Order> GetOrder(int orderId)
@@ -31,25 +41,9 @@ namespace Primeflix.Services.OrderService
             return _databaseContext.OrderDetails.Where(od => od.OrderId == orderId).ToList();
         }
 
-        public async Task<ICollection<Order>> GetOrders()
-        {
-            return _databaseContext.Orders.ToList();
-        }
-
         public async Task<ICollection<Order>> GetOrdersOfAUser(int userId)
         {
             return _databaseContext.Orders.Where(o => o.UserId == userId).ToList();
-        }
-
-        public async Task<bool> IsDuplicate(int orderId, int userId)
-        {
-            var order = _databaseContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).Any();
-            return order;
-        }
-
-        public async Task<bool> OrderExists(int orderId)
-        {
-            return _databaseContext.Orders.Where(o => o.Id == orderId).Any();
         }
 
         public async Task<bool> PlaceOrder(int cartId)
@@ -94,15 +88,21 @@ namespace Primeflix.Services.OrderService
             return await Save();
         }
 
-        public async Task<bool> Save()
-        {
-            return _databaseContext.SaveChanges() < 0 ? false : true;
-        }
-
         public async Task<bool> UpdateOrder(Order order)
         {
             _databaseContext.Update(order);
             return await Save();
+        }
+
+        public async Task<bool> DeleteOrder(Order order)
+        {
+            _databaseContext.Remove(order);
+            return await Save();
+        }
+
+        public async Task<bool> Save()
+        {
+            return _databaseContext.SaveChanges() < 0 ? false : true;
         }
     }
 }

@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
-using Primeflix.Services.Authentication;
+using Primeflix.Services.UserService;
 using Primeflix.Services.CartService;
 using Primeflix.Services.ProductService;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Primeflix.Controllers
 {
@@ -11,25 +12,26 @@ namespace Primeflix.Controllers
     [ApiController]
     public class CartsController : ControllerBase
     {
-        private ICartRepository _cartRepository;
-        private IAuthentication _authentication;
-        private IProductRepository _productRepository;
+        private readonly ICartRepository _cartRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IProductRepository _productRepository;
 
-        public CartsController(ICartRepository cartRepository, IAuthentication authentication, IProductRepository productRepository)
+        public CartsController(ICartRepository cartRepository, IUserRepository userRepository, IProductRepository productRepository)
         {
             _cartRepository = cartRepository;
-            _authentication = authentication;
+            _userRepository = userRepository;
             _productRepository = productRepository;
         }
 
         //api/carts
         [HttpGet(Name = "GetCart")]
+        [Authorize]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<CartDto>))]
         public async Task<IActionResult> GetCart()
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -45,7 +47,7 @@ namespace Primeflix.Controllers
 
                 foreach (var cart in carts)
                 {
-                    var user = await _authentication.GetUser(cart.UserId);
+                    var user = await _userRepository.GetUser(cart.UserId);
 
                     var userDto = new UserWithoutPasswordDto()
                     {
@@ -84,7 +86,7 @@ namespace Primeflix.Controllers
 
             else
             {
-                var userId = await GetUserIdFromToken();
+                var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
                 if (userId == null || userId == 0)
                     return BadRequest();
@@ -97,7 +99,7 @@ namespace Primeflix.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var user = await _authentication.GetUser(userId);
+                var user = await _userRepository.GetUser(userId);
 
                 var userDto = new UserWithoutPasswordDto()
                 {
@@ -137,16 +139,28 @@ namespace Primeflix.Controllers
 
         //api/carts
         [HttpPost]
+        [Authorize]
         [ProducesResponseType(201, Type = typeof(Cart))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> UpdateCart([FromBody] IEnumerable<CartProductDto> products)
         {
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
             if (products == null)
                 return BadRequest();
 
-            var userId = await GetUserIdFromToken();
+            var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null || userId == 0)
                 return BadRequest();
@@ -179,15 +193,26 @@ namespace Primeflix.Controllers
 
         //api/carts
         [HttpDelete()]
+        [Authorize]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(409)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteCart()
         {
-            var userId = await GetUserIdFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
+            var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userId == null || userId == 0)
                 return BadRequest();
@@ -207,36 +232,6 @@ namespace Primeflix.Controllers
             }
 
             return NoContent();
-        }
-
-        public async Task<int> GetUserIdFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return 0;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
-
-            return userId;
-        }
-
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return null;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
-
-            return role;
         }
     }
 }

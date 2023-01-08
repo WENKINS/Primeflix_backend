@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
-using Primeflix.Services.Authentication;
 using Primeflix.Services.CelebrityService;
 using Primeflix.Services.FormatService;
 using Primeflix.Services.GenreService;
@@ -10,6 +9,7 @@ using Primeflix.Services.GenreTranslationService;
 using Primeflix.Services.LanguageService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
@@ -19,14 +19,14 @@ namespace Primeflix.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private IProductRepository _productRepository;
-        private IGenreRepository _genreRepository;
-        private ICelebrityRepository _celebrityRepository;
-        private IFormatRepository _formatRepository;
-        private IGenreTranslationRepository _genreTranslationRepository;
-        private IProductTranslationRepository _productTranslationRepository;
-        private ILanguageRepository _languageRepository;
-        private IAuthentication _authentication;
+        private readonly IProductRepository _productRepository;
+        private readonly IGenreRepository _genreRepository;
+        private readonly ICelebrityRepository _celebrityRepository;
+        private readonly IFormatRepository _formatRepository;
+        private readonly IGenreTranslationRepository _genreTranslationRepository;
+        private readonly IProductTranslationRepository _productTranslationRepository;
+        private readonly ILanguageRepository _languageRepository;
+        private readonly IUserRepository _userRepository;
 
         public ProductsController(
             IProductRepository productRepository,
@@ -36,7 +36,7 @@ namespace Primeflix.Controllers
             IGenreTranslationRepository genreTranslationRepository,
             IProductTranslationRepository productTranslationRepository,
             ILanguageRepository languageRepository,
-            IAuthentication authentication
+            IUserRepository userRepository
             )
         {
             _productRepository = productRepository;
@@ -46,7 +46,7 @@ namespace Primeflix.Controllers
             _genreTranslationRepository = genreTranslationRepository;
             _productTranslationRepository = productTranslationRepository;
             _languageRepository = languageRepository;
-            _authentication = authentication;
+            _userRepository = userRepository;
         }
 
         //api/products/params
@@ -423,11 +423,12 @@ namespace Primeflix.Controllers
         [HttpPost]
         [ProducesResponseType(201, Type = typeof(Product))]
         [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> CreateProduct([FromBody] ProductToCreateDto productToCreate)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -488,12 +489,13 @@ namespace Primeflix.Controllers
         [HttpPut("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> UpdateProduct(int productId, [FromBody] ProductToCreateDto productToUpdate)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -561,13 +563,14 @@ namespace Primeflix.Controllers
         [HttpDelete("{productId}")]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteProduct(int productId)
         {
-            var userRole = await GetUserRoleFromToken();
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
 
             if (userRole == null)
                 return BadRequest();
@@ -642,36 +645,6 @@ namespace Primeflix.Controllers
             }
 
             return NoContent();
-        }
-
-        public async Task<int> GetUserIdFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return 0;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
-
-            return userId;
-        }
-
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return null;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
-
-            return role;
         }
     }
 }

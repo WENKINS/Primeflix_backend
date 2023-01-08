@@ -12,26 +12,14 @@ namespace Primeflix.Services.OrderStatusService
             _databaseContext = databaseContext;
         }
 
-        public async Task<bool> CreateStatus(Status status, List<StatusTranslation> translations)
+        public async Task<bool> StatusExists(int statusId)
         {
-            _databaseContext.Add(status);
-            foreach(var translation in translations)
-            {
-                _databaseContext.Add(translation);
-            }
-
-            return await Save();
+            return _databaseContext.Statuses.Where(s => s.Id == statusId).Any();
         }
 
-        public async Task<bool> DeleteStatus(Status status)
+        public async Task<bool> IsDuplicate(string statusName)
         {
-            _databaseContext.Remove(status);
-            return await Save();
-        }
-
-        public async Task<ICollection<Order>> GetOrdersOfAStatus(int statusId)
-        {
-            return _databaseContext.Orders.Where(o => o.StatusId == statusId).ToList();
+            return _databaseContext.Statuses.Where(s => s.Name.Equals(statusName)).Any();
         }
 
         public async Task<ICollection<StatusTranslation>> GetOrderStatuses(int languageId)
@@ -59,25 +47,38 @@ namespace Primeflix.Services.OrderStatusService
             return _databaseContext.StatusTranslations.Where(st => st.Name.Equals(statusName)).Select(st => st.Status).FirstOrDefault();
         }
 
-        public async Task<bool> IsDuplicate(string statusName)
+        public async Task<ICollection<Order>> GetOrdersOfAStatus(int statusId)
         {
-            return _databaseContext.Statuses.Where(s => s.Name.Equals(statusName)).Any();
+            return _databaseContext.Orders.Where(o => o.StatusId == statusId).ToList();
         }
 
-        public async Task<bool> Save()
-        {
-            return _databaseContext.SaveChanges() < 0 ? false : true;
-        }
 
-        public async Task<bool> StatusExists(int statusId)
+        public async Task<bool> CreateStatus(Status status, List<StatusTranslation> translations)
         {
-            return _databaseContext.Statuses.Where(s => s.Id == statusId).Any();
+            _databaseContext.Add(status);
+            foreach(var translation in translations)
+            {
+                _databaseContext.Add(translation);
+            }
+
+            return await Save();
         }
 
         public async Task<bool> UpdateStatus(Status status)
         {
             _databaseContext.Statuses.Update(status);
             return await Save();
+        }
+
+        public async Task<bool> DeleteStatus(Status status)
+        {
+            _databaseContext.Remove(status);
+            return await Save();
+        }
+
+        public async Task<bool> Save()
+        {
+            return _databaseContext.SaveChanges() < 0 ? false : true;
         }
     }
 }

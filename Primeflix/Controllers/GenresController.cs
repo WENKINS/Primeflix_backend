@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Primeflix.DTO;
 using Primeflix.Models;
 using Primeflix.Services.FormatService;
@@ -6,26 +7,28 @@ using Primeflix.Services.GenreService;
 using Primeflix.Services.GenreTranslationService;
 using Primeflix.Services.ProductService;
 using Primeflix.Services.ProductTranslationService;
+using Primeflix.Services.UserService;
 
 namespace Primeflix.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GenresController : Controller
+    public class GenresController : ControllerBase
     {
-
-        private IGenreRepository _genreRepository;
-        private IProductRepository _productRepository;
-        private IFormatRepository _formatRepository;
-        private IGenreTranslationRepository _genreTranslationRepository;
-        private IProductTranslationRepository _productTranslationRepository;
+        private readonly IGenreRepository _genreRepository;
+        private readonly IProductRepository _productRepository;
+        private readonly IFormatRepository _formatRepository;
+        private readonly IGenreTranslationRepository _genreTranslationRepository;
+        private readonly IProductTranslationRepository _productTranslationRepository;
+        private readonly IUserRepository _userRepository;
 
         public GenresController(
             IGenreRepository genreRepository, 
             IProductRepository productRepository, 
             IFormatRepository formatRepository,
             IGenreTranslationRepository genreTranslationRepository,
-            IProductTranslationRepository productTranslationRepository
+            IProductTranslationRepository productTranslationRepository,
+            IUserRepository userRepository
             )
         {
             _genreRepository = genreRepository;
@@ -33,15 +36,17 @@ namespace Primeflix.Controllers
             _formatRepository = formatRepository;
             _genreTranslationRepository = genreTranslationRepository;
             _productTranslationRepository = productTranslationRepository;
+            _userRepository = userRepository;
         }
 
         //api/genres
         [HttpGet()]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public async Task<IActionResult> GetGenres([FromQuery]string? lan = "en")
+        public async Task<IActionResult> GetGenres([FromQuery] string? lang = "en")
         {
-            var genres = await _genreRepository.GetGenres(lan);
+            var genres = await _genreRepository.GetGenres(lang);
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -49,7 +54,7 @@ namespace Primeflix.Controllers
             var genresDto = new List<GenreDto>();
             foreach (var genre in genres)
             {
-                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lan);
+                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
                 genresDto.Add(new GenreDto
                 {
                     Id = genre.Id,
@@ -59,12 +64,12 @@ namespace Primeflix.Controllers
             return Ok(genresDto);
         }
 
-        //api/genres/languageCode/genreId
-        [HttpGet("{languageCode}/{genreId}", Name = "GetGenre")]
+        //api/genres/genreId?lang=fr
+        [HttpGet("{genreId}", Name = "GetGenre")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public async Task<IActionResult> GetGenre(string languageCode, int genreId)
+        public async Task<IActionResult> GetGenre(int genreId, [FromQuery] string? lang = "en")
         {
             if (!await _genreRepository.GenreExists(genreId))
                 return NotFound();
@@ -74,7 +79,7 @@ namespace Primeflix.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+            var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
 
             var genreDto = new GenreDto()
             {
@@ -85,12 +90,13 @@ namespace Primeflix.Controllers
             return Ok(genreDto);
         }
 
-        //api/genres/products/productId
-        [HttpGet("products/{languageCode}/{productId}")]
+        //api/genres/products/productId?lang=fr
+        [HttpGet("products/{productId}")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<GenreDto>))]
-        public async Task<IActionResult> GetGenresOfAProduct(int productId, string languageCode)
+        public async Task<IActionResult> GetGenresOfAProduct(int productId, [FromQuery] string lang = "en")
         {
             if (!await _productRepository.ProductExists(productId))
                 return NotFound();
@@ -100,7 +106,7 @@ namespace Primeflix.Controllers
             var genresDto = new List<GenreDto>();
             foreach (var genre in genres)
             {
-                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, languageCode);
+                var genreTranslation = await _genreTranslationRepository.GetGenreTranslation(genre.Id, lang);
                 genresDto.Add(new GenreDto()
                 {
                     Id = genre.Id,
@@ -115,11 +121,12 @@ namespace Primeflix.Controllers
         }
 
         //api/genres/genresId/products
-        [HttpGet("{languageCode}/{genreId}/products")]
+        [HttpGet("{genreId}/products")]
+        [AllowAnonymous]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(200, Type = typeof(IEnumerable<ProductDetailsDto>))]
-        public async Task<IActionResult> GetProductsOfAGenre(string languageCode, int genreId)
+        public async Task<IActionResult> GetProductsOfAGenre(int genreId, [FromQuery] string lang)
         {
             if (!await _genreRepository.GenreExists(genreId))
                 return NotFound();
@@ -140,7 +147,7 @@ namespace Primeflix.Controllers
                     Name = oFormat.Name
                 };
 
-                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, languageCode);
+                var productTranslation = await _productTranslationRepository.GetProductTranslation(product.Id, lang);
 
                 productsDto.Add(new ProductDetailsDto
                 {
@@ -162,18 +169,30 @@ namespace Primeflix.Controllers
 
         //api/genres
         [HttpPost]
+        [Authorize]
         [ProducesResponseType(201, Type = typeof(Genre))]
         [ProducesResponseType(400)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> CreateGenre([FromBody]Genre genreToCreate)
+        public async Task<IActionResult> CreateGenre([FromBody]NewGenreDto genreToCreate)
         {
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
             if (genreToCreate == null)
                 return BadRequest(ModelState);
 
-            if (await _genreRepository.GenreExists(genreToCreate))
+            if (await _genreRepository.GenreExists(genreToCreate.EnglishName) || await _genreRepository.GenreExists(genreToCreate.FrenchName))
             {
-                ModelState.AddModelError("", $"Genre {genreToCreate.Name} already exists");
+                ModelState.AddModelError("", $"Genre already exists");
                 return StatusCode(422, ModelState);
             }
 
@@ -182,7 +201,7 @@ namespace Primeflix.Controllers
 
             if(!await _genreRepository.CreateGenre(genreToCreate))
             {
-                ModelState.AddModelError("", $"Something went wrong saving {genreToCreate.Name}");
+                ModelState.AddModelError("", $"Something went wrong creating Genre {genreToCreate.EnglishName}");
                 return StatusCode(500, ModelState);
             }
 
@@ -191,13 +210,25 @@ namespace Primeflix.Controllers
 
         //api/genres/genreId
         [HttpPut("{genreId}")]
+        [Authorize]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(422)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> UpdateGenre(int genreId, [FromBody]Genre updatedGenre)
+        public async Task<IActionResult> UpdateGenre(int genreId, [FromBody]NewGenreDto updatedGenre)
         {
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
             if (updatedGenre == null)
                 return BadRequest(ModelState);
 
@@ -207,9 +238,9 @@ namespace Primeflix.Controllers
             if (!await _genreRepository.GenreExists(genreId))
                 return NotFound();
 
-            if(await _genreRepository.IsDuplicate(genreId, updatedGenre.Name))
+            if(await _genreRepository.IsDuplicate(updatedGenre.EnglishName) || await _genreRepository.IsDuplicate(updatedGenre.FrenchName))
             {
-                ModelState.AddModelError("", $"Genre {updatedGenre.Name} already exists");
+                ModelState.AddModelError("", $"Genre already exists");
                 return StatusCode(422, ModelState);
             }
 
@@ -218,7 +249,7 @@ namespace Primeflix.Controllers
 
             if(!await _genreRepository.UpdateGenre(updatedGenre))
             {
-                ModelState.AddModelError("", $"Something went wrong update {updatedGenre.Name}");
+                ModelState.AddModelError("", $"Something went wrong updating the genre");
                 return StatusCode(500, ModelState);
             }
 
@@ -227,6 +258,7 @@ namespace Primeflix.Controllers
 
         //api/genres/genreId
         [HttpDelete("{genreId}")]
+        [Authorize]
         [ProducesResponseType(204)] // no content
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -235,6 +267,17 @@ namespace Primeflix.Controllers
         [ProducesResponseType(500)]
         public async Task<IActionResult> DeleteGenre(int genreId)
         {
+            var userRole = await _userRepository.GetUserRoleFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userRole == null)
+                return BadRequest();
+
+            if (!userRole.Equals("admin"))
+            {
+                ModelState.AddModelError("", "User is not an admin");
+                return StatusCode(401, ModelState);
+            }
+
             if (!await _genreRepository.GenreExists(genreId))
                 return NotFound();
 

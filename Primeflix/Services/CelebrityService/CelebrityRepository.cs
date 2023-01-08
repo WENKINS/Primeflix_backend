@@ -5,7 +5,7 @@ namespace Primeflix.Services.CelebrityService
 {
     public class CelebrityRepository : ICelebrityRepository
     {
-        private DatabaseContext _databaseContext;
+        private readonly DatabaseContext _databaseContext;
 
         public CelebrityRepository(DatabaseContext databaseContext)
         {
@@ -23,20 +23,20 @@ namespace Primeflix.Services.CelebrityService
                 .Any();
         }
 
-        public async Task<bool> IsDuplicate(int celebrityId, string firstName, string lastName)
+        public async Task<bool> IsDuplicate(string firstName, string lastName)
         {
-            var celebrity = _databaseContext.Celebrities.Where(c => c.FirstName.Trim().ToUpper() == firstName.Trim().ToUpper() && c.LastName.Trim().ToUpper() == lastName.Trim().ToUpper() && c.Id != celebrityId).FirstOrDefault();
+            var celebrity = _databaseContext.Celebrities.Where(c => c.FirstName.Trim().ToUpper() == firstName.Trim().ToUpper() && c.LastName.Trim().ToUpper() == lastName.Trim().ToUpper()).FirstOrDefault();
             return celebrity == null ? false : true;
-        }
-
-        public async Task<Celebrity> GetCelebrity(int celebrityId)
-        {
-            return _databaseContext.Celebrities.Where(c => c.Id == celebrityId).FirstOrDefault();
         }
 
         public async Task<ICollection<Celebrity>> GetCelebrities()
         {
             return _databaseContext.Celebrities.OrderBy(c => c.LastName).ToList();
+        }
+
+        public async Task<Celebrity> GetCelebrity(int celebrityId)
+        {
+            return _databaseContext.Celebrities.Where(c => c.Id == celebrityId).FirstOrDefault();
         }
 
         public async Task<bool> CreateCelebrity(Celebrity celebrity)
@@ -61,6 +61,8 @@ namespace Primeflix.Services.CelebrityService
         {
             return _databaseContext.SaveChanges() < 0 ? false : true;
         }
+
+        // Directors
 
         public async Task<bool> DirectorExists(int celebrityId)
         {
@@ -94,6 +96,9 @@ namespace Primeflix.Services.CelebrityService
         {
             return _databaseContext.Directors.Where(d => d.CelebrityId == celebrityId).Select(p => p.Product).ToList();
         }
+
+        // Actors 
+
         public async Task<bool> ActorExists(int celebrityId)
         {
             return _databaseContext.Actors.Where(a => a.CelebrityId == celebrityId).Select(d => d.Celebrity).Any();
@@ -126,6 +131,5 @@ namespace Primeflix.Services.CelebrityService
         {
             return _databaseContext.Actors.Where(d => d.CelebrityId == celebrityId).Select(p => p.Product).ToList();
         }
-
     }
 }

@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Primeflix.Services.Authentication;
+using Primeflix.Services.UserService;
 using Primeflix.Services.CartService;
 using Primeflix.Services.OrderService;
 using Primeflix.Services.PaymentService;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Primeflix.Controllers
 {
@@ -11,27 +12,41 @@ namespace Primeflix.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentRepository _paymentRepository;
-        private readonly IAuthentication _authentication;
+        private readonly IUserRepository _userRepository;
         private readonly ICartRepository _cartRepository;
-        private readonly IOrderRepository _orderRepository;
-        public PaymentController(IPaymentRepository paymentRepository, IAuthentication authentication, ICartRepository cartRepository, IOrderRepository orderRepository)
+
+        public PaymentController(
+            IPaymentRepository paymentRepository, 
+            IUserRepository userRepository, 
+            ICartRepository cartRepository
+            )
         {
             _paymentRepository = paymentRepository;
-            _authentication = authentication;
+            _userRepository = userRepository;
             _cartRepository = cartRepository;
-            _orderRepository = orderRepository;
         }
 
         [HttpPost("checkout")]
+        [Authorize]
+        [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(400)]
         public async Task<ActionResult<string>> CreateCheckoutSession()
         {
-            var userId = await GetUserIdFromToken();
+            var userId = await _userRepository.GetUserIdFromToken(HttpContext.Request.Headers["Authorization"]);
+
+            if (userId == null)
+                return BadRequest();
+
             var cartId = (await _cartRepository.GetCartOfAUser(userId)).Id;
+
             var session = await _paymentRepository.CreateCheckoutSession(cartId);
+
             return Ok(session.Url);
         }
 
         [HttpPost]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
         public async Task<ActionResult<bool>> FulfillOrder()
         {
             var response = await _paymentRepository.FulfillOrder(Request);
@@ -39,36 +54,6 @@ namespace Primeflix.Controllers
                 return BadRequest();
 
             return Ok();
-        }
-
-        public async Task<int> GetUserIdFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return 0;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            int userId = Int32.Parse(await _authentication.DecodeTokenForId(token));
-
-            return userId;
-        }
-
-        public async Task<string> GetUserRoleFromToken()
-        {
-            string bearerToken = HttpContext.Request.Headers["Authorization"];
-
-            if (String.IsNullOrEmpty(bearerToken) || !bearerToken.StartsWith("Bearer "))
-            {
-                return null;
-            }
-
-            string token = bearerToken.Substring("Bearer ".Length);
-            string role = await _authentication.DecodeTokenForRole(token);
-
-            return role;
         }
     }
 }

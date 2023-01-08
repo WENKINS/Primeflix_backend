@@ -1,7 +1,7 @@
-﻿using Primeflix.Services.Authentication;
-using Primeflix.Services.CartService;
+﻿using Primeflix.Services.CartService;
 using Primeflix.Services.OrderService;
 using Primeflix.Services.ProductService;
+using Primeflix.Services.UserService;
 using Stripe;
 using Stripe.Checkout;
 
@@ -10,19 +10,25 @@ namespace Primeflix.Services.PaymentService
     public class PaymentRepository : IPaymentRepository
     {
         private readonly ICartRepository _cartRepository;
-        private readonly IAuthentication _authentication;
+        private readonly IUserRepository _authentication;
         private readonly IOrderRepository _orderRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IConfiguration _configuration;
 
-        const string secret = "whsec_0e5c563329e8f57680b5144f4ae511c1836442cbfd94fe2b53ddbffab70306a8";
-
-        public PaymentRepository(ICartRepository cartRepository, IAuthentication authentication, IOrderRepository orderRepository, IProductRepository productRepository)
+        public PaymentRepository(
+            ICartRepository cartRepository, 
+            IUserRepository authentication, 
+            IOrderRepository orderRepository, 
+            IProductRepository productRepository,
+            IConfiguration configuration
+            )
         {
-            StripeConfiguration.ApiKey = "sk_test_51MLTT4DVJ3BzSGwXY3qcyRDPEDYKVja1xDRadx3LlnZE4tR5ebagsQzfLtauhnBYJ0WuYVudXsXr4GUap757Ryes00xV5s7Lxe";
             _cartRepository = cartRepository;
             _authentication = authentication;
             _orderRepository = orderRepository;
             _productRepository = productRepository;
+            _configuration = configuration;
+            StripeConfiguration.ApiKey = _configuration.GetSection("Stripe:Key").Value;
         }
 
         public async Task<Session> CreateCheckoutSession(int cartId)
@@ -86,7 +92,7 @@ namespace Primeflix.Services.PaymentService
                 var stripeEvent = EventUtility.ConstructEvent(
                     json,
                     request.Headers["Stripe-Signature"],
-                    secret
+                    _configuration.GetSection("Stripe:Secret").Value
                     );
                 if (stripeEvent.Type == Events.CheckoutSessionCompleted)
                 {
@@ -102,9 +108,6 @@ namespace Primeflix.Services.PaymentService
             {
                 return false;
             }
-
-
-
         }
     }
 }
